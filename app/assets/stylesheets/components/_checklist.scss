@@ -182,10 +182,13 @@
 
 // --- Quick add -----------------------------------------------------------------
 
-.quick-add {
+.quick-add__row {
   display: flex;
   gap: var(--space-2);
 }
+
+// Only offered once quick_add_controller.js has found speech recognition.
+.quick-add:not(.has-voice) .quick-add__voice-hint { display: none; }
 
 .quick-add__input {
   flex: 1;

@@ -38,4 +38,15 @@ RSpec.describe "Dashboard" do
     expect(response.body).to include("Finished today")
     expect(response.body).not_to include("Finished last week")
   end
+
+  it "names the talk shortcut the way the keyboard does" do
+    tenant = create_tenant
+    sign_in tenant.owner
+
+    get dashboard_path, headers: { "User-Agent" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)" }
+    expect(response.body).to include("<kbd>⌥V</kbd>")
+
+    get dashboard_path, headers: { "User-Agent" => "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }
+    expect(response.body).to include("<kbd>Alt+V</kbd>")
+  end
 end

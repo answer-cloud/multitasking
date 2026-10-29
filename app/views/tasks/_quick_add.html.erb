@@ -1,24 +1,29 @@
 <%# Type it, or press the microphone and say it. Either way it lands at the %>
-<%# top of the list. quick-add handles the voice; Turbo handles the rest. %>
+<%# top of the list. quick-add handles the voice and the shortcuts; Turbo %>
+<%# handles the rest. %>
 <%= form_with model: task, id: "quick_add", class: "quick-add",
       data: { controller: "quick-add",
-              action: "turbo:submit-end->quick-add#reset keydown.slash@document->quick-add#focus" } do |form| %>
-  <%= form.hidden_field :source, value: "typed", data: { quick_add_target: "source" } %>
-  <%= form.label :title, "What needs doing?", class: "visually-hidden" %>
-  <%= form.text_field :title, class: "input quick-add__input", placeholder: quick_add_placeholder,
-        autocomplete: "off", autofocus: true, maxlength: 200, required: true,
-        data: { quick_add_target: "input" } %>
+              action: "turbo:submit-end->quick-add#reset keydown@document->quick-add#shortcut" } do |form| %>
+  <div class="quick-add__row">
+    <%= form.hidden_field :source, value: "typed", data: { quick_add_target: "source" } %>
+    <%= form.label :title, "What needs doing?", class: "visually-hidden" %>
+    <%= form.text_field :title, class: "input quick-add__input", placeholder: quick_add_placeholder,
+          autocomplete: "off", autofocus: true, maxlength: 200, required: true,
+          data: { quick_add_target: "input" } %>
 
-  <button type="button" class="btn quick-add__mic" hidden
-          data-quick-add-target="mic" data-action="quick-add#listen"
-          aria-pressed="false" aria-label="Say it instead">
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" />
-      <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
-    </svg>
-  </button>
-  <%= form.submit "Add", class: "btn btn--primary" %>
+    <button type="button" class="btn quick-add__mic" hidden
+            data-quick-add-target="mic" data-action="quick-add#listen"
+            aria-pressed="false" aria-keyshortcuts="Alt+V"
+            aria-label="Say it instead" title="Say it instead (<%= voice_shortcut_label %>)">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" />
+        <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+      </svg>
+    </button>
+    <%= form.submit "Add", class: "btn btn--primary" %>
+  </div>
+
+  <p class="quick-add__hint" id="quick_add_error" data-quick-add-target="hint">
+    <%= render "tasks/quick_add_hint" %>
+  </p>
 <% end %>
-<p class="quick-add__hint" id="quick_add_error" data-quick-add-target="hint">
-  Press <kbd>/</kbd> to jump here.
-</p>
