@@ -58,7 +58,7 @@ module ApplicationHelper
   # a template — see RichText.
   def rich_text(html) = RichText.render(html)
 
-  def page_title(title, description: nil, &actions)
-    render "shared/page_header", title: title, description: description, actions: actions
+  def page_title(title, description: nil, eyebrow: nil, &actions)
+    render "shared/page_header", title: title, description: description, eyebrow: eyebrow, actions: actions
   end
 end

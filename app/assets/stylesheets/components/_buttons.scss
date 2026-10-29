@@ -11,9 +11,10 @@
   background-color: transparent;
   color: var(--ink);
   font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  letter-spacing: 0.01em;
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-wide);
   line-height: 1.2;
+  text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
   transition: background-color var(--transition), color var(--transition),

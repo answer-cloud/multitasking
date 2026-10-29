@@ -16,38 +16,44 @@
   @include sm { gap: var(--space-4); }
 }
 
-.masthead__brand {
+// Brand left, one word right — the masthead of an artist's sheet.
+.masthead__brand,
+.masthead__link {
   @include display-type;
   font-size: var(--text-md);
+  color: var(--ink);
   text-decoration: none;
   white-space: nowrap;
-
-  // The brand is the first thing to give up room on a narrow screen — the
-  // team switcher and account menu are the useful controls.
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
 
   @include sm { font-size: var(--text-lg); }
 
   &:hover { color: var(--accent); }
 }
 
-.masthead__nav {
-  display: none;
-  gap: var(--space-5);
-  align-items: center;
+// The brand is the first thing to give up room on a narrow screen.
+.masthead__brand {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
 
-  @include md { display: flex; }
+.masthead__link {
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+
+  &:focus-visible { @include focus-ring; }
+  &[aria-expanded="true"] { color: var(--accent); }
 }
 
 .masthead__actions {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--space-4);
   align-items: center;
   min-width: 0;
 
-  @include sm { gap: var(--space-3); }
+  @include sm { gap: var(--space-5); }
 }
 
 .nav-link {
@@ -80,57 +86,6 @@
     white-space: nowrap;
     margin-bottom: -1px;
   }
-}
-
-// The mobile menu, toggled by the `toggle` Stimulus controller.
-.masthead__menu-button {
-  @include md { display: none; }
-}
-
-.mobile-nav {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding-block: var(--space-3);
-  border-top: var(--border);
-
-  @include md { display: none; }
-
-  .nav-link {
-    padding: var(--space-2) 0;
-    border-bottom: 0;
-  }
-}
-
-// Team switcher trigger, showing the active team.
-.team-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-2);
-  border: var(--border);
-  background: none;
-  font-size: var(--text-sm);
-  cursor: pointer;
-  min-width: 0;
-  max-width: 8rem;
-
-  @include sm { max-width: 14rem; }
-
-  &:hover { border-color: var(--ink); }
-  &:focus-visible { @include focus-ring; }
-}
-
-.team-switch__name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.team-switch__caret {
-  flex: none;
-  color: var(--ink-tertiary);
-  font-size: 0.6em;
 }
 
 // Footer.

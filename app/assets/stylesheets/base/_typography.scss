@@ -23,7 +23,9 @@ h4 {
   font-family: var(--font-body);
   font-size: var(--text-md);
   font-weight: var(--weight-bold);
+  line-height: var(--leading-snug);
   letter-spacing: var(--tracking-normal);
+  text-transform: none;
 }
 
 // The page's opening statement. Editorial layouts earn their character here.

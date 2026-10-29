@@ -11,28 +11,29 @@
 
 :root {
   // --- Colour ------------------------------------------------------------
-  // Ink on paper. Near-black rather than pure black, off-white rather than
-  // pure white — easier on the eye at length, and it reads as printed.
-  --ink:            #111111;
-  --ink-secondary:  #5a5a58;
-  --ink-tertiary:   #8a8a86;
-  --paper:          #fdfdfb;
-  --paper-sunken:   #f4f4f0;
-  --paper-raised:   #ffffff;
+  // Black ink on cream stock, like a printed artist's sheet. Near-black rather
+  // than pure black, and a warm cream rather than white — it reads as paper,
+  // not as a lit screen.
+  --ink:            #121212;
+  --ink-secondary:  #55524a;
+  --ink-tertiary:   #77736a;
+  --paper:          #f7f3e3;
+  --paper-sunken:   #eee9d4;
+  --paper-raised:   #fbf9ef;
 
-  --rule:           #e0e0da;   // hairline borders
-  --rule-strong:    #111111;   // structural borders
+  --rule:           #d6cfb8;   // hairline borders
+  --rule-strong:    #121212;   // structural borders
 
-  --accent:         #8c3b1e;   // a single muted brick red
+  --accent:         #c8381a;   // a single vermilion, for the tick and little else
   --accent-ink:     #ffffff;
-  --accent-wash:    #f7ede9;
+  --accent-wash:    #f6e2d3;
 
   --positive:       #2f5d3a;
-  --positive-wash:  #edf3ee;
+  --positive-wash:  #e8eedd;
   --caution:        #7a5a12;
-  --caution-wash:   #f8f2e2;
+  --caution-wash:   #f3e9cc;
   --critical:       #8f2a2a;
-  --critical-wash:  #f8eaea;
+  --critical-wash:  #f4e0d8;
 
   // Confetti only. Two brighter colours so a celebration looks like one; they
   // never appear in the interface itself.
@@ -73,12 +74,15 @@
   --text-2xl:  clamp(2.125rem, 2.4vw + 1.5rem, 3.25rem);
   --text-3xl:  clamp(2.75rem, 4vw + 1.6rem, 4.5rem);
 
+  // Display leading is set solid and then some: stacked capitals sit almost
+  // touching, the way a poster sets them.
+  --leading-display: 0.9;
   --leading-tight: 1.15;
   --leading-snug:  1.35;
   --leading-body:  1.6;
   --leading-loose: 1.75;
 
-  --tracking-display: -0.035em;  // large sizes need more negative tracking
+  --tracking-display: -0.02em;   // capitals need less pulling in than lowercase
   --tracking-tight: -0.015em;
   --tracking-normal: 0;
   --tracking-wide:  0.08em;
@@ -121,19 +125,19 @@
 // tokens carry the whole change.
 @media (prefers-color-scheme: dark) {
   :root {
-    --ink:           #f2f1ec;
-    --ink-secondary: #a8a69e;
-    --ink-tertiary:  #77756e;
-    --paper:         #131311;
-    --paper-sunken:  #1b1b18;
-    --paper-raised:  #1e1e1b;
+    --ink:           #f7f3e3;
+    --ink-secondary: #b3ae9f;
+    --ink-tertiary:  #858174;
+    --paper:         #121212;
+    --paper-sunken:  #1b1a17;
+    --paper-raised:  #1f1e1a;
 
-    --rule:          #33322e;
-    --rule-strong:   #f2f1ec;
+    --rule:          #34322c;
+    --rule-strong:   #f7f3e3;
 
-    --accent:        #d97a55;
-    --accent-ink:    #131311;
-    --accent-wash:   #2a1d17;
+    --accent:        #f26b47;
+    --accent-ink:    #121212;
+    --accent-wash:   #2c1a14;
 
     --positive:      #8fc09c;
     --positive-wash: #1a241c;

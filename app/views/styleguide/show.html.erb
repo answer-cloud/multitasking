@@ -15,7 +15,7 @@
   ]
 
   paper_tokens = [
-    ["--paper",        "The page. Off-white, so it reads as printed rather than lit."],
+    ["--paper",        "The page. Warm cream, so it reads as printed stock rather than a lit screen."],
     ["--paper-sunken", "Row hover, code blocks, recessed panels."],
     ["--paper-raised", "Panels, inputs, menus — anything sitting above the page."]
   ]
@@ -23,7 +23,7 @@
   line_tokens = [
     ["--rule",        "Hairline borders. The system's main separator."],
     ["--rule-strong", "Structural borders — under a page header, above a table body."],
-    ["--accent",      "A single muted brick red. Hover, focus, one emphasis per screen."]
+    ["--accent",      "A single vermilion. The tick, the strike, hover and focus — little else."]
   ]
 
   state_tokens = [
@@ -59,9 +59,9 @@
 <%= page_title "Style guide", description: "The design system, rendered from itself." %>
 
 <p class="lede">
-  Editorial by intent: strong type, generous whitespace, and hairline rules doing
-  the work a shadow would do elsewhere. One family, one accent, and a token for
-  every value. Everything below is live markup using
+  An artist's sheet: heavy capitals on cream, generous whitespace, and hairline
+  rules doing the work a shadow would do elsewhere. One family, one accent, and
+  a token for every value. Everything below is live markup using
   <code>application.scss</code> — if a component changes, this page changes with it.
 </p>
 
@@ -148,8 +148,8 @@
     <h2>Type</h2>
     <p class="sg-section__note">
       Lexend Deca, variable, weights 100–900, self-hosted. Display and body are
-      the same family — they separate by weight, size and tracking, never by
-      typeface.
+      the same family — display is heavy capitals set solid, body is mixed case.
+      They separate by weight, case and leading, never by typeface.
     </p>
   </div>
 
@@ -183,11 +183,11 @@
   <div class="grid grid--2">
     <div>
       <p style="font-size: var(--text-lg); font-weight: var(--weight-normal);">Regular 400 — running text</p>
-      <p style="font-size: var(--text-lg); font-weight: var(--weight-medium);">Medium 500 — buttons, controls</p>
+      <p style="font-size: var(--text-lg); font-weight: var(--weight-medium);">Medium 500 — task titles, inputs</p>
     </div>
     <div>
-      <p style="font-size: var(--text-lg); font-weight: var(--weight-bold);">Semibold 600 — emphasis, labels</p>
-      <p class="display" style="font-size: var(--text-lg);">Extrabold 800 — display</p>
+      <p style="font-size: var(--text-lg); font-weight: var(--weight-bold);">Semibold 600 — buttons, labels, emphasis</p>
+      <p class="display" style="font-size: var(--text-lg);">Extrabold 800 — display, in capitals</p>
     </div>
   </div>
 
@@ -605,6 +605,128 @@
   </div>
 </section>
 
+<%# =============================== LISTS ============================== %>
+<section class="sg-section" id="lists">
+  <div class="sg-section__head">
+    <h2>The list</h2>
+    <p class="sg-section__note">
+      A catalogue of rows. Hairline between each, a plus that opens the details,
+      and nothing else competing with the work.
+    </p>
+  </div>
+
+  <div class="sg-spec">
+    <div>
+      <%= page_title "To do", eyebrow: "Thursday 29 October", description: "Good morning, Ada. 2 things to go, 1 already in the jar." %>
+    </div>
+    <div>
+      <span class="sg-spec__class">page_title(…, eyebrow:)<br>.eyebrow</span>
+      <p class="sg-spec__note">
+        The eyebrow is an optional small caps line above the title. The dashboard
+        uses it for the date.
+      </p>
+    </div>
+  </div>
+
+  <div class="sg-spec">
+    <div class="quick-add">
+      <div class="quick-add__row">
+        <label for="sg_quick_add" class="visually-hidden">What needs doing?</label>
+        <input type="text" id="sg_quick_add" class="input quick-add__input" placeholder="e.g. Ship the thing">
+        <button type="button" class="btn btn--primary">Add</button>
+      </div>
+      <p class="quick-add__hint">Press <kbd>/</kbd> to type.</p>
+    </div>
+    <div>
+      <span class="sg-spec__class">.quick-add<br>.quick-add__input</span>
+      <p class="sg-spec__note">
+        A line to write on, not a box to fill in. One strong rule under large
+        type.
+      </p>
+    </div>
+  </div>
+
+  <div class="sg-spec">
+    <ul class="checklist">
+      <li class="checklist__item">
+        <button type="button" class="checkbox" role="checkbox" aria-checked="false" aria-label="Done: Reply to Sam about the deck">
+          <%= render "tasks/tick" %>
+        </button>
+        <details class="checklist__details" open>
+          <summary class="checklist__summary">
+            <span class="checklist__title">Reply to Sam about the deck</span>
+            <span class="checklist__meta"><span class="checklist__source">Slack</span></span>
+            <span class="checklist__toggle" aria-hidden="true"></span>
+          </summary>
+          <div class="checklist__panel">
+            <div class="checklist__notes"><p>Slides 4 to 9 still need numbers.</p></div>
+            <dl class="checklist__facts">
+              <dt>From</dt>
+              <dd>Slack</dd>
+              <dt>Added</dt>
+              <dd>2 hours ago by Ada Lovelace</dd>
+            </dl>
+            <p class="checklist__actions">
+              <a class="btn-link" href="#lists">Open ↗</a>
+              <a class="btn-link" href="#lists">Edit</a>
+            </p>
+          </div>
+        </details>
+      </li>
+      <li class="checklist__item">
+        <button type="button" class="checkbox" role="checkbox" aria-checked="false" aria-label="Done: Check on the Claude run">
+          <%= render "tasks/tick" %>
+        </button>
+        <details class="checklist__details">
+          <summary class="checklist__summary">
+            <span class="checklist__title">Check on the Claude run</span>
+            <span class="checklist__meta">
+              <span class="checklist__quiet">quiet for 3 days</span>
+              <span class="checklist__source">Claude</span>
+            </span>
+            <span class="checklist__toggle" aria-hidden="true"></span>
+          </summary>
+          <div class="checklist__panel"><p>No notes.</p></div>
+        </details>
+      </li>
+    </ul>
+    <div>
+      <span class="sg-spec__class">.checklist .checklist__item<br>.checklist__details .checklist__summary<br>.checklist__panel .checklist__facts</span>
+      <p class="sg-spec__note">
+        The checkbox is a real submit button; the rest of the row is a native
+        <code>&lt;details&gt;</code>, so it opens without JavaScript. The plus
+        turns to a cross when open.
+      </p>
+    </div>
+  </div>
+
+  <div class="sg-spec">
+    <div>
+      <div class="today__head">
+        <h2>Done today <span class="today__count numeric">1</span></h2>
+      </div>
+      <ul class="checklist checklist--done">
+        <li class="checklist__item is-done">
+          <button type="button" class="checkbox" role="checkbox" aria-checked="true" aria-label="Not done yet: Book the dentist">
+            <%= render "tasks/tick" %>
+          </button>
+          <div class="checklist__summary">
+            <a class="checklist__title" href="#lists">Book the dentist</a>
+            <time class="checklist__time numeric">09:41</time>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div>
+      <span class="sg-spec__class">.checklist--done<br>.today__head .today__count<br>.checklist__time</span>
+      <p class="sg-spec__note">
+        Under the list, what got finished today. The same rows, quieter: smaller
+        type, struck through, and the time each one went in.
+      </p>
+    </div>
+  </div>
+</section>
+
 <%# ============================ SURFACES ============================== %>
 <section class="sg-section" id="surfaces">
   <div class="sg-section__head">
@@ -670,13 +792,19 @@
   <div class="sg-spec">
     <div class="cluster">
       <div class="dropdown" data-controller="dropdown">
-        <button type="button" class="btn" data-action="dropdown#toggle" data-dropdown-target="button" aria-expanded="false">
-          Ada Lovelace
+        <button type="button" class="masthead__link" data-action="dropdown#toggle" data-dropdown-target="button" aria-expanded="false">
+          Menu
         </button>
         <div class="dropdown__menu dropdown__menu--left" data-dropdown-target="menu" hidden>
-          <a class="dropdown__item" href="#surfaces">Account</a>
+          <a class="dropdown__item" href="#surfaces" aria-current="page">To do</a>
+          <a class="dropdown__item" href="#surfaces">Done pile</a>
+          <a class="dropdown__item" href="#surfaces">Connect agents</a>
+          <hr class="dropdown__divider">
+          <span class="dropdown__label">Acme</span>
+          <a class="dropdown__item" href="#surfaces">Members</a>
           <a class="dropdown__item" href="#surfaces">Team settings</a>
-          <a class="dropdown__item" href="#surfaces">Sign out</a>
+          <hr class="dropdown__divider">
+          <a class="dropdown__item dropdown__item--danger" href="#surfaces">Sign out</a>
         </div>
       </div>
 
@@ -698,9 +826,11 @@
     <div>
       <span class="sg-spec__class">data-controller="dropdown"<br>data-controller="toggle"<br>data-controller="clipboard"</span>
       <p class="sg-spec__note">
-        Three of the seven controllers. The dropdown's shadow is the single one
-        permitted anywhere in the system: it separates a floating layer from the
-        page rather than decorating a static box.
+        Three of the seven controllers. The masthead has one word on the right,
+        <code>.masthead__link</code>, and everything that is not the list lives
+        in its menu. The dropdown's shadow is the single one permitted anywhere
+        in the system: it separates a floating layer from the page rather than
+        decorating a static box.
       </p>
     </div>
   </div>

@@ -18,6 +18,8 @@ module TasksHelper
   # quick_add_controller.js listens for Alt with the V key on every platform.
   def voice_shortcut_label = request.user_agent.to_s.include?("Macintosh") ? "⌥V" : "Alt+V"
 
+  def today_label = Time.current.strftime("%A %-d %B")
+
   def greeting(user)
     hour = Time.current.hour
     part = if hour < 5 then "Burning the midnight oil"

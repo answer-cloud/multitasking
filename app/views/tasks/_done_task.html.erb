@@ -1,4 +1,4 @@
-<%# A finished task, in the jar. Ticking it again puts it back on the list. %>
+<%# A task finished today. Ticking it again puts it back on the list. %>
 <li id="<%= dom_id(task, :done) %>" class="checklist__item is-done" data-checklist-item>
   <%= form_with url: task_completion_path(task), method: :delete, class: "checklist__form" do %>
     <button type="submit" class="checkbox" role="checkbox" aria-checked="true"
@@ -8,7 +8,9 @@
     </button>
   <% end %>
 
-  <div class="checklist__body">
+  <div class="checklist__summary">
     <%= link_to task.title, task, class: "checklist__title" %>
+    <%= tag.time(task.completed_at.strftime("%H:%M"), datetime: task.completed_at.iso8601,
+          class: "checklist__time numeric") %>
   </div>
 </li>

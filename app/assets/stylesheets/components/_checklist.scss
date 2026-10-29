@@ -13,6 +13,8 @@
   border-top: var(--border-strong);
 }
 
+// A row in a catalogue: checkbox, title, where it came from, and a plus that
+// opens the details. Hairline between every row, nothing else.
 .checklist__item {
   display: flex;
   gap: var(--space-4);
@@ -32,24 +34,40 @@
 
 .checklist__form { flex: none; }
 
-.checklist__body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+.checklist__details { flex: 1; min-width: 0; }
+
+.checklist__summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "title toggle" "meta meta";
+  gap: var(--space-1) var(--space-4);
+  align-items: baseline;
+  flex: 1;
   min-width: 0;
-  padding-top: 0.1rem;
+  list-style: none;
+  cursor: pointer;
+
+  @include sm {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas: "title meta toggle";
+  }
+
+  &::-webkit-details-marker { display: none; }
+  &:focus-visible { @include focus-ring; }
+  &:hover .checklist__toggle { color: var(--accent); }
 }
 
 .checklist__title {
+  grid-area: title;
+  justify-self: start;
   position: relative;
-  align-self: flex-start;
-  font-size: var(--text-md);
+  font-size: var(--text-lg);
   font-weight: var(--weight-medium);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-tight);
   color: var(--ink);
   text-decoration: none;
   transition: color 300ms ease-out 200ms;
-
-  &:hover { text-decoration: underline; }
 
   // The strike. Drawn left to right when the box is ticked.
   &::after {
@@ -67,11 +85,54 @@
 }
 
 .checklist__meta {
+  grid-area: meta;
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
-  align-items: center;
+  align-items: baseline;
   font-size: var(--text-sm);
+}
+
+.checklist__source { @include label; }
+
+// A plus that turns into a cross when the row is open.
+.checklist__toggle {
+  grid-area: toggle;
+  font-size: var(--text-lg);
+  line-height: 1;
+  color: var(--ink);
+  transition: transform 200ms var(--spring), color var(--transition);
+
+  &::before { content: "+"; }
+}
+
+.checklist__details[open] .checklist__toggle { transform: rotate(45deg); }
+
+.checklist__panel {
+  display: grid;
+  gap: var(--space-4);
+  max-width: var(--measure);
+  padding-block: var(--space-4) var(--space-2);
+  font-size: var(--text-base);
+  color: var(--ink-secondary);
+
+  @include playful-motion { animation: checklist-unfold 260ms ease-out; }
+}
+
+.checklist__facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-1) var(--space-5);
+  margin: 0;
+
+  dt { @include label; line-height: var(--leading-body); }
+  dd { margin: 0; }
+}
+
+.checklist__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
 }
 
 .checklist__quiet {
@@ -90,18 +151,35 @@
   .checklist__title::after { transform: scaleX(1) rotate(-1deg); }
 }
 
+// What got finished today. The same rows, quieter: smaller type, the time it
+// went in, and no details to open.
 .checklist--done {
-  border-top: 0;
+  .checklist__item { gap: var(--space-3); padding-block: var(--space-3); }
 
-  .checklist__item { padding-block: var(--space-2); border-bottom: 0; }
-  // Titles here can wrap, and the drawn strike only crosses one line, so the
-  // jar uses a plain line-through instead.
+  .checklist__summary {
+    display: flex;
+    gap: var(--space-4);
+    align-items: baseline;
+    justify-content: space-between;
+    cursor: auto;
+  }
+
+  // Titles here can wrap, and the drawn strike only crosses one line, so
+  // finished rows use a plain line-through instead.
   .checklist__title {
-    font-size: var(--text-sm);
+    font-size: var(--text-md);
     text-decoration: line-through var(--accent);
+
+    &:hover { color: var(--ink); }
   }
 
   .checklist__title::after { content: none; }
+}
+
+.checklist__time {
+  flex: none;
+  font-size: var(--text-sm);
+  color: var(--ink-tertiary);
 }
 
 // --- The checkbox ------------------------------------------------------------
@@ -112,7 +190,8 @@
   width: 1.75rem;
   height: 1.75rem;
   padding: 0;
-  background-color: var(--paper-raised);
+  margin-top: 0.1rem;
+  background-color: transparent;
   border: 2px solid var(--ink);
   color: var(--ink);
   cursor: pointer;
@@ -157,6 +236,7 @@
 .checklist--done .checkbox {
   width: 1.25rem;
   height: 1.25rem;
+  margin-top: 0.15rem;
   border-width: 1px;
 
   .checkbox__tick { width: 0.95rem; height: 0.95rem; }
@@ -166,8 +246,16 @@
 
 .checklist-empty {
   padding: var(--space-8) var(--space-5);
+  border-bottom: var(--border);
   text-align: center;
   color: var(--ink-secondary);
+}
+
+.checklist-empty__title {
+  @include display-type;
+  margin-block: var(--space-3) var(--space-2);
+  font-size: var(--text-xl);
+  color: var(--ink);
 }
 
 .checklist-empty__art {
@@ -181,10 +269,14 @@
 .checklist:has(.checklist__item) + .checklist-empty { display: none; }
 
 // --- Quick add -----------------------------------------------------------------
+// A line to write on, not a box to fill in.
+
+.quick-add { margin-bottom: var(--space-7); }
 
 .quick-add__row {
   display: flex;
   gap: var(--space-2);
+  align-items: flex-end;
 }
 
 // Only offered once quick_add_controller.js has found speech recognition.
@@ -192,14 +284,23 @@
 
 .quick-add__input {
   flex: 1;
-  padding-block: var(--space-3);
-  font-size: var(--text-md);
-  border: var(--border-strong);
+  min-width: 0;
+  padding: var(--space-2) 0;
+  background-color: transparent;
+  border: 0;
+  border-bottom: var(--border-strong);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-tight);
+
+  &:hover { border-bottom-color: var(--ink); }
+  &:focus { box-shadow: inset 0 -1px 0 var(--ink); }
 }
 
 .quick-add__mic {
   flex: none;
   padding-inline: var(--space-3);
+  border-color: transparent;
 
   svg {
     width: 1.25rem;
@@ -223,28 +324,6 @@
   margin-top: var(--space-2);
   font-size: var(--text-sm);
   color: var(--ink-tertiary);
-}
-
-// --- The jar ---------------------------------------------------------------------
-
-.jar__stat { margin-bottom: var(--space-4); }
-
-.jar__count { display: inline-block; color: var(--accent); }
-
-.jar__sound { font-size: var(--text-sm); }
-
-.jar__empty {
-  font-size: var(--text-sm);
-  color: var(--ink-tertiary);
-}
-
-.checklist--done:has(.checklist__item) + .jar__empty { display: none; }
-
-.jar__more {
-  margin-top: var(--space-4);
-  padding-top: var(--space-3);
-  border-top: var(--border);
-  font-size: var(--text-sm);
 }
 
 // --- The cheer -------------------------------------------------------------------
@@ -307,6 +386,11 @@
 
 @keyframes checklist-drop-in {
   from { opacity: 0; transform: translateY(-0.75rem) rotate(-1deg); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes checklist-unfold {
+  from { opacity: 0; transform: translateY(-0.5rem); }
   to   { opacity: 1; transform: none; }
 }
 

@@ -1,5 +1,7 @@
 <%# A task still to do. The checkbox is a real submit button inside a real %>
 <%# form, so ticking works without JavaScript; checklist#check adds the fun. %>
+<%# The rest of the row is a native <details>: it opens, like a catalogue %>
+<%# entry, to show where the task came from — no JavaScript there either. %>
 <li id="<%= dom_id(task) %>" class="checklist__item" data-checklist-item>
   <%= form_with url: task_completion_path(task), method: :post, class: "checklist__form" do %>
     <button type="submit" class="checkbox" role="checkbox" aria-checked="false"
@@ -9,12 +11,34 @@
     </button>
   <% end %>
 
-  <div class="checklist__body">
-    <%= link_to task.title, task, class: "checklist__title" %>
-    <span class="checklist__meta">
-      <%= source_badge(task) %>
-      <%= open_link(task) %>
-      <%= quiet_note(task) %>
-    </span>
-  </div>
+  <details class="checklist__details">
+    <summary class="checklist__summary">
+      <span class="checklist__title"><%= task.title %></span>
+      <span class="checklist__meta">
+        <%= quiet_note(task) %>
+        <span class="checklist__source"><%= task.source_label %></span>
+      </span>
+      <span class="checklist__toggle" aria-hidden="true"></span>
+    </summary>
+
+    <div class="checklist__panel">
+      <% if task.notes.present? %>
+        <div class="checklist__notes"><%= simple_format(task.notes) %></div>
+      <% end %>
+
+      <dl class="checklist__facts">
+        <dt>From</dt>
+        <dd><%= task.source_label %></dd>
+        <dt>Added</dt>
+        <dd><%= time_ago_in_words(task.created_at) %> ago<%= " by #{task.created_by.name}" if task.created_by %></dd>
+      </dl>
+
+      <%# No policy check: this partial is also broadcast to open dashboards, %>
+      <%# where there is no signed-in user to ask, and every member may edit. %>
+      <p class="checklist__actions">
+        <%= open_link(task) %>
+        <%= link_to "Edit", edit_task_path(task), class: "btn-link" %>
+      </p>
+    </div>
+  </details>
 </li>

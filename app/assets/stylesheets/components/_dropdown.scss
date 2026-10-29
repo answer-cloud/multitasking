@@ -37,7 +37,8 @@
   &:hover { background-color: var(--paper-sunken); }
   &:focus-visible { @include focus-ring; outline-offset: -2px; }
 
-  &[aria-current="true"] { font-weight: var(--weight-bold); }
+  &[aria-current="true"],
+  &[aria-current="page"] { font-weight: var(--weight-bold); }
 }
 
 .dropdown__item--danger { color: var(--critical); }
