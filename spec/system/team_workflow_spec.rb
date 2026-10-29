@@ -14,24 +14,6 @@ RSpec.describe "Team workflow" do
     click_button "Sign in"
   end
 
-  it "creates a team, adds a project, and scopes it to that team" do
-    user = create(:user)
-    sign_in_through_form(user)
-
-    expect(page).to have_content("Create a team")
-    fill_in "Team name", with: "Acme Widgets"
-    click_button "Create team"
-
-    expect(page).to have_content("Acme Widgets is ready")
-
-    click_link "New project"
-    fill_in "Name", with: "First project"
-    click_button "Create Project"
-
-    expect(page).to have_content("Project created")
-    expect(page).to have_content("First project")
-    expect(Project.sole.team.name).to eq("Acme Widgets")
-  end
 
   it "switches between teams and shows different data" do
     user = create(:user)

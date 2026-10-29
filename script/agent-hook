@@ -1,0 +1,114 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Sends a task to the Multitasking inbox when Claude Code or Codex finishes a
+# turn or needs you.
+#
+#   Claude Code (~/.claude/settings.json), on Stop and Notification:
+#     script/agent-hook claude          # hook JSON arrives on stdin
+#
+#   Codex (~/.codex/config.toml):
+#     notify = ["/path/to/script/agent-hook", "codex"]   # JSON arrives as the last argument
+#
+# Reads `url=` and `token=` from ~/.config/multitasking/config, or from
+# MULTITASKING_URL and MULTITASKING_TOKEN.
+#
+# Stdlib only, and it always exits 0: a hook that fails or hangs would get in
+# the way of the agent it is meant to be watching.
+
+require "json"
+require "net/http"
+require "uri"
+
+CONFIG_PATH = File.expand_path("~/.config/multitasking/config")
+
+def config
+  file = File.exist?(CONFIG_PATH) ? File.read(CONFIG_PATH) : ""
+  values = file.lines.to_h { |line| line.strip.split("=", 2) }.reject { |key, _| key.to_s.empty? }
+
+  {
+    url: ENV["MULTITASKING_URL"] || values["url"] || "http://localhost:3000",
+    token: ENV["MULTITASKING_TOKEN"] || values["token"]
+  }
+end
+
+def shorten(text, length = 90)
+  text = text.to_s.gsub(/\s+/, " ").strip
+  text.length > length ? "#{text[0, length - 1]}…" : text
+end
+
+def project_name(cwd) = cwd.to_s.empty? ? "somewhere" : File.basename(cwd)
+
+# The first thing you asked for in this session, which is a better task title
+# than a session id. Skips the wrappers Claude Code stores around commands.
+def first_prompt(transcript_path)
+  return if transcript_path.to_s.empty? || !File.exist?(transcript_path)
+
+  File.foreach(transcript_path) do |line|
+    entry = JSON.parse(line) rescue next
+    next unless entry["type"] == "user"
+
+    content = entry.dig("message", "content")
+    text = content.is_a?(Array) ? content.filter_map { |part| part["text"] if part["type"] == "text" }.join(" ") : content.to_s
+    next if text.strip.empty? || text.lstrip.start_with?("<")
+
+    return text
+  end
+  nil
+end
+
+def claude_task(input)
+  project = project_name(input["cwd"])
+  topic = shorten(first_prompt(input["transcript_path"]) || "session in #{project}")
+  waiting = input["hook_event_name"] == "Notification"
+
+  {
+    source: "claude",
+    external_id: input["session_id"],
+    title: waiting ? "Claude needs you: #{topic}" : "Review Claude: #{topic}",
+    notes: [ input["message"], "Project: #{input["cwd"]}" ].compact.join("\n\n")
+  }
+end
+
+def codex_task(input)
+  return unless input["type"] == "agent-turn-complete"
+
+  project = project_name(input["cwd"])
+  topic = shorten(Array(input["input-messages"]).first || "thread in #{project}")
+
+  {
+    source: "codex",
+    external_id: input["thread-id"] || input["turn-id"],
+    title: "Review Codex: #{topic}",
+    notes: [ shorten(input["last-assistant-message"], 500), ("Project: #{input["cwd"]}" if input["cwd"]) ].compact.join("\n\n")
+  }
+end
+
+def deliver(task, settings)
+  uri = URI.join(settings[:url], "/inbox/tasks")
+  request = Net::HTTP::Post.new(uri, "Content-Type" => "application/json",
+                                     "Authorization" => "Bearer #{settings[:token]}")
+  request.body = JSON.generate(task)
+
+  Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 2, read_timeout: 3) do |http|
+    http.request(request)
+  end
+end
+
+begin
+  agent = ARGV.first
+  settings = config
+  exit 0 if settings[:token].to_s.empty?
+
+  task =
+    case agent
+    when "claude" then claude_task(JSON.parse($stdin.read))
+    when "codex" then codex_task(JSON.parse(ARGV.last))
+    end
+
+  deliver(task, settings) if task
+rescue StandardError => e
+  warn "multitasking agent-hook: #{e.class}: #{e.message}" if ENV["MULTITASKING_DEBUG"]
+end
+
+exit 0

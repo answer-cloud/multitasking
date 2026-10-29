@@ -47,3 +47,9 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
+
+// Motion that is there for delight, not meaning. Anyone who has asked their
+// system for less motion gets none of it.
+@mixin playful-motion {
+  @media (prefers-reduced-motion: no-preference) { @content; }
+}

@@ -21,7 +21,6 @@ module Admin
       @memberships = @team.memberships.ordered.includes(:user)
       @invitations = @team.invitations.order(created_at: :desc).limit(20)
       @subscription = @team.subscription
-      @project_count = @team.projects.count
     end
   end
 end

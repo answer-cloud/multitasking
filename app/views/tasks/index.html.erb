@@ -1,0 +1,51 @@
+<% content_for :title, "Done pile" %>
+
+<%= page_title "The done pile", description: "Everything you’ve ticked off. Proof you did things." do %>
+  <%= link_to "Back to the list", dashboard_path, class: "btn btn--ghost" %>
+<% end %>
+
+<%= form_with url: tasks_path, method: :get, class: "filter-bar",
+      data: { controller: "autosubmit", action: "input->autosubmit#submit" } do %>
+  <%= search_field_tag :q, params[:q], placeholder: "Search finished tasks", class: "input" %>
+  <noscript><%= submit_tag "Search", class: "btn btn--sm" %></noscript>
+<% end %>
+
+<% if @page.any? %>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Task</th>
+          <th>From</th>
+          <th class="is-numeric">Done</th>
+          <th class="is-actions"><span class="visually-hidden">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @page.each do |task| %>
+          <tr id="<%= dom_id(task, :done) %>">
+            <td>
+              <%= link_to task.title, task, class: "table__primary" %>
+              <span class="table__secondary"><%= truncate(task.notes, length: 80) %></span>
+            </td>
+            <td><%= source_badge(task) %></td>
+            <td class="is-numeric quiet"><%= short_datetime(task.completed_at) %></td>
+            <td class="is-actions">
+              <%= button_to "Undo", task_completion_path(task), method: :delete, class: "btn-link",
+                    form: { data: { turbo: false } } %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <%= render "shared/pagination", page: @page %>
+<% else %>
+  <div class="empty">
+    <p class="empty__title"><%= params[:q].present? ? "Nothing matched" : "The pile is empty" %></p>
+    <p>
+      <%= params[:q].present? ? "Try a different search." : "Tick something off and it lands here." %>
+    </p>
+  </div>
+<% end %>

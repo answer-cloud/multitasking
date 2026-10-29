@@ -1,0 +1,26 @@
+<%= form_with model: task, class: "form" do |form| %>
+  <%= render "shared/form_errors", record: task %>
+
+  <div class="field">
+    <%= form.label :title, class: "field__label" %>
+    <%= form.text_field :title, class: "input", maxlength: 200, required: true,
+          "aria-invalid": task.errors.include?(:title) %>
+  </div>
+
+  <div class="field">
+    <%= form.label :url, "Link", class: "field__label" %>
+    <%= form.url_field :url, class: "input", placeholder: "https://",
+          "aria-invalid": task.errors.include?(:url) %>
+    <p class="field__hint">The tab, thread or email this is about.</p>
+  </div>
+
+  <div class="field">
+    <%= form.label :notes, class: "field__label" %>
+    <%= form.text_area :notes, class: "textarea" %>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit "Save task", class: "btn btn--primary" %>
+    <%= link_to "Cancel", task, class: "btn btn--ghost" %>
+  </div>
+<% end %>

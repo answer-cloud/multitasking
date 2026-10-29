@@ -1,0 +1,3 @@
+<%= turbo_stream.remove dom_id(@task, :done) %>
+<%= turbo_stream.prepend "tasks", partial: "tasks/task", locals: { task: @task } %>
+<%= turbo_stream.update "jar_count", current_team.tasks.done_today.count.to_s %>

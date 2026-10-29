@@ -1,0 +1,330 @@
+@use "../abstracts/mixins" as *;
+@use "../abstracts/breakpoints" as *;
+
+// The task list. Square checkboxes with a hand-drawn tick, a strike that
+// draws across the title, and confetti that is not ours to style beyond its
+// colour. The choreography lives in checklist_controller.js; this file is the
+// look of each frame.
+
+.checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-top: var(--border-strong);
+}
+
+.checklist__item {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  padding-block: var(--space-4);
+  border-bottom: var(--border);
+  overflow: hidden;
+
+  @include playful-motion {
+    animation: checklist-drop-in 480ms var(--spring) both;
+
+    @for $i from 1 through 8 {
+      &:nth-child(#{$i}) { animation-delay: #{$i * 40}ms; }
+    }
+  }
+}
+
+.checklist__form { flex: none; }
+
+.checklist__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  padding-top: 0.1rem;
+}
+
+.checklist__title {
+  position: relative;
+  align-self: flex-start;
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+  text-decoration: none;
+  transition: color 300ms ease-out 200ms;
+
+  &:hover { text-decoration: underline; }
+
+  // The strike. Drawn left to right when the box is ticked.
+  &::after {
+    content: "";
+    position: absolute;
+    left: -0.15em;
+    right: -0.15em;
+    top: 55%;
+    height: 2px;
+    background-color: var(--accent);
+    transform: scaleX(0) rotate(-1deg);
+    transform-origin: left center;
+    transition: transform 280ms ease-out 140ms;
+  }
+}
+
+.checklist__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  font-size: var(--text-sm);
+}
+
+.checklist__quiet {
+  color: var(--caution);
+
+  &::before { content: "zzz"; margin-right: var(--space-1); letter-spacing: var(--tracking-wide); }
+
+  @include playful-motion {
+    &::before { display: inline-block; animation: checklist-snore 2.4s ease-in-out infinite; }
+  }
+}
+
+.checklist__item.is-checked,
+.checklist__item.is-done {
+  .checklist__title { color: var(--ink-tertiary); }
+  .checklist__title::after { transform: scaleX(1) rotate(-1deg); }
+}
+
+.checklist--done {
+  border-top: 0;
+
+  .checklist__item { padding-block: var(--space-2); border-bottom: 0; }
+  // Titles here can wrap, and the drawn strike only crosses one line, so the
+  // jar uses a plain line-through instead.
+  .checklist__title {
+    font-size: var(--text-sm);
+    text-decoration: line-through var(--accent);
+  }
+
+  .checklist__title::after { content: none; }
+}
+
+// --- The checkbox ------------------------------------------------------------
+
+.checkbox {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  background-color: var(--paper-raised);
+  border: 2px solid var(--ink);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background-color 160ms ease-out, transform 160ms var(--spring);
+
+  &:hover { transform: rotate(-4deg) scale(1.06); }
+  &:active { transform: scale(0.88); }
+  &:focus-visible { @include focus-ring; }
+}
+
+.checkbox__tick {
+  width: 1.3rem;
+  height: 1.3rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3.2;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  // Hidden as well as undrawn: a zero-length dash still paints its line cap.
+  opacity: 0;
+  transition: stroke-dashoffset 260ms ease-out, opacity 60ms;
+}
+
+// A faint preview of the tick, so the box looks like it wants to be ticked.
+.checkbox:hover .checkbox__tick { stroke-dashoffset: 0.7; opacity: 0.35; }
+
+.is-checked .checkbox,
+.is-done .checkbox {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+
+  .checkbox__tick { stroke-dashoffset: 0; opacity: 1; }
+}
+
+.is-checked .checkbox {
+  @include playful-motion { animation: checklist-squish 420ms var(--spring); }
+}
+
+.checklist--done .checkbox {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-width: 1px;
+
+  .checkbox__tick { width: 0.95rem; height: 0.95rem; }
+}
+
+// --- Empty states ------------------------------------------------------------
+
+.checklist-empty {
+  padding: var(--space-8) var(--space-5);
+  text-align: center;
+  color: var(--ink-secondary);
+}
+
+.checklist-empty__art {
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-wide);
+  color: var(--accent);
+
+  @include playful-motion { animation: checklist-twinkle 3s ease-in-out infinite; }
+}
+
+.checklist:has(.checklist__item) + .checklist-empty { display: none; }
+
+// --- Quick add -----------------------------------------------------------------
+
+.quick-add {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.quick-add__input {
+  flex: 1;
+  padding-block: var(--space-3);
+  font-size: var(--text-md);
+  border: var(--border-strong);
+}
+
+.quick-add__mic {
+  flex: none;
+  padding-inline: var(--space-3);
+
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+  }
+
+  &.is-listening {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+    outline: 2px solid var(--accent);
+
+    @include playful-motion { animation: checklist-listening 1.1s ease-out infinite; }
+  }
+}
+
+.quick-add__hint {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--ink-tertiary);
+}
+
+// --- The jar ---------------------------------------------------------------------
+
+.jar__stat { margin-bottom: var(--space-4); }
+
+.jar__count { display: inline-block; color: var(--accent); }
+
+.jar__sound { font-size: var(--text-sm); }
+
+.jar__empty {
+  font-size: var(--text-sm);
+  color: var(--ink-tertiary);
+}
+
+.checklist--done:has(.checklist__item) + .jar__empty { display: none; }
+
+.jar__more {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: var(--border);
+  font-size: var(--text-sm);
+}
+
+// --- The cheer -------------------------------------------------------------------
+// The speech bubble that pops up from the bottom of the screen.
+
+.cheer {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-6);
+  z-index: 60;
+  max-width: calc(100vw - var(--space-6));
+  padding: var(--space-3) var(--space-5);
+  background-color: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 1.5rem) rotate(-2deg) scale(0.9);
+  transition: opacity 200ms ease-out, transform 360ms var(--spring);
+
+  &.is-showing {
+    opacity: 1;
+    transform: translate(-50%, 0) rotate(-2deg) scale(1);
+  }
+
+  &:empty { display: none; }
+}
+
+// --- Confetti ----------------------------------------------------------------------
+
+.confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.confetti__piece {
+  position: absolute;
+  display: block;
+  line-height: 1;
+  will-change: transform, opacity;
+}
+
+.confetti__piece--square { width: 0.5rem; height: 0.5rem; background-color: currentColor; }
+.confetti__piece--strip  { width: 0.25rem; height: 0.8rem; background-color: currentColor; }
+.confetti__piece--star   { font-size: var(--text-md); }
+
+.confetti__piece--accent   { color: var(--accent); }
+.confetti__piece--positive { color: var(--positive); }
+.confetti__piece--caution  { color: var(--caution); }
+.confetti__piece--sun      { color: var(--sun); }
+.confetti__piece--sky      { color: var(--sky); }
+
+// --- Keyframes ---------------------------------------------------------------------
+
+@keyframes checklist-drop-in {
+  from { opacity: 0; transform: translateY(-0.75rem) rotate(-1deg); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes checklist-squish {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(0.75, 0.85) rotate(-6deg); }
+  65%  { transform: scale(1.2) rotate(4deg); }
+  100% { transform: scale(1); }
+}
+
+@keyframes checklist-snore {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50%      { transform: translateY(-2px); opacity: 1; }
+}
+
+@keyframes checklist-twinkle {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 1; transform: scale(1.06); }
+}
+
+@keyframes checklist-listening {
+  from { outline-offset: 0; outline-color: var(--accent); }
+  to   { outline-offset: 0.6rem; outline-color: transparent; }
+}

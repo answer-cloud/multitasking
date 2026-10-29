@@ -34,6 +34,11 @@
   --critical:       #8f2a2a;
   --critical-wash:  #f8eaea;
 
+  // Confetti only. Two brighter colours so a celebration looks like one; they
+  // never appear in the interface itself.
+  --sun:            #e0a100;
+  --sky:            #2f6fb3;
+
   // --- Type ----------------------------------------------------------------
   // Lexend Deca carries both roles — display and text. It is self-hosted, so
   // there is still no third-party request at page load; see base/_fonts.scss.
@@ -109,6 +114,7 @@
 
   // --- Motion --------------------------------------------------------------
   --transition: 120ms ease-out;
+  --spring:     cubic-bezier(.3, 1.6, .5, 1);   // overshoots, then settles
 }
 
 // Dark mode inverts ink and paper rather than restyling every component. The
@@ -135,5 +141,8 @@
     --caution-wash:  #262015;
     --critical:      #e08c8c;
     --critical-wash: #291a1a;
+
+    --sun:           #f2c94c;
+    --sky:           #7fb2e5;
   }
 }

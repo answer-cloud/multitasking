@@ -22,11 +22,18 @@ Rails.application.routes.draw do
   # --- Signed-in application ----------------------------------------------
   get "dashboard", to: "dashboard#show", as: :dashboard
 
-  resources :projects do
-    # Where the description editor sends a dropped or chosen picture. Create
-    # only: the response is the address the editor puts in the text, and the
-    # picture then lives with the project. See Projects::ImagesController.
-    resources :images, only: :create, module: :projects
+  resources :tasks, only: %i[index show create edit update destroy] do
+    # Checking off is creating a completion; unchecking destroys it.
+    resource :completion, only: %i[create destroy], module: :tasks
+  end
+
+  # The page that sets up the hooks, and rotates the inbox token they use.
+  resource :connection, only: %i[show update]
+
+  # Other tools push tasks in here. Bearer token, no session, no CSRF — see
+  # Inbox::TasksController.
+  namespace :inbox do
+    resources :tasks, only: :create
   end
 
   resources :teams, only: %i[new create edit update destroy] do

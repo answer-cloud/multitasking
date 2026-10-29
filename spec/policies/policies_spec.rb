@@ -121,22 +121,20 @@ RSpec.describe "Policies" do
     end
   end
 
-  describe ProjectPolicy do
-    let(:project) { create(:project, team: team) }
 
-    it "lets any member create and edit" do
-      expect(as(member, project, :create?)).to be(true)
-      expect(as(member, project, :update?)).to be(true)
-    end
+  describe TaskPolicy do
+    let(:task) { create(:task, team: team) }
 
-    it "restricts destroying to admins and above" do
-      expect(as(member, project, :destroy?)).to be(false)
-      expect(as(admin,  project, :destroy?)).to be(true)
+    it "lets any member add, edit, tick off and delete" do
+      %i[create? update? complete? destroy?].each do |question|
+        expect(as(member, task, question)).to be(true)
+      end
     end
 
     it "refuses everything to a non-member" do
-      expect(as(outsider, project, :show?)).to be(false)
-      expect(as(outsider, project, :create?)).to be(false)
+      %i[show? create? update? complete? destroy?].each do |question|
+        expect(as(outsider, task, question)).to be(false)
+      end
     end
   end
 

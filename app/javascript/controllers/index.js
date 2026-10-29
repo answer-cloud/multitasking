@@ -6,8 +6,10 @@ import { Application } from "@hotwired/stimulus"
 import ClipboardController from "./clipboard_controller"
 import DropdownController from "./dropdown_controller"
 import AutosubmitController from "./autosubmit_controller"
+import ChecklistController from "./checklist_controller"
 import FlashController from "./flash_controller"
 import ModalController from "./modal_controller"
+import QuickAddController from "./quick_add_controller"
 import RichTextEditorController from "./rich_text_editor_controller"
 import TabsController from "./tabs_controller"
 import ToggleController from "./toggle_controller"
@@ -19,8 +21,10 @@ window.Stimulus = application
 application.register("clipboard", ClipboardController)
 application.register("dropdown", DropdownController)
 application.register("autosubmit", AutosubmitController)
+application.register("checklist", ChecklistController)
 application.register("flash", FlashController)
 application.register("modal", ModalController)
+application.register("quick-add", QuickAddController)
 application.register("rich-text-editor", RichTextEditorController)
 application.register("tabs", TabsController)
 application.register("toggle", ToggleController)

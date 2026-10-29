@@ -1,72 +1,62 @@
-<% content_for :title, current_team.name %>
+<% content_for :title, "Inbox" %>
 
-<%= page_title current_team.name, description: "Everything below is scoped to this team." do %>
-  <% if policy(Project.new(team: current_team)).create? %>
-    <%= link_to "New project", new_project_path, class: "btn btn--primary" %>
-  <% end %>
-<% end %>
+<%= turbo_stream_from current_team, :tasks %>
 
-<div class="split">
-  <div>
-    <section class="panel">
-      <div class="panel__header">
-        <h2>Recent projects</h2>
-        <%= link_to "All projects", projects_path, class: "btn btn--sm btn--ghost" %>
+<%= page_title greeting(Current.user), description: plate_summary(@tasks.size, @done_today.size) %>
+
+<div class="split inbox"
+     data-controller="checklist"
+     data-checklist-count-value="<%= @done_today.size %>"
+     data-action="turbo:before-stream-render@document->checklist#holdStream turbo:submit-end->checklist#settled">
+  <div class="stack--loose stack">
+    <div>
+      <%= render "tasks/quick_add", task: @new_task %>
+    </div>
+
+    <div>
+      <ul class="checklist" id="tasks" data-checklist-target="list">
+        <%= render partial: "tasks/task", collection: @tasks, as: :task %>
+      </ul>
+
+      <div class="checklist-empty">
+        <p class="checklist-empty__art" aria-hidden="true">✦ ˚ ✧ ˚ ✦</p>
+        <p class="empty__title">Inbox zero.</p>
+        <p>Nothing left to tick. Type something above, or go outside.</p>
       </div>
-
-      <% if @projects.any? %>
-        <div class="table-wrap">
-          <table class="table">
-            <tbody>
-              <% @projects.each do |project| %>
-                <tr>
-                  <td>
-                    <%= link_to project.name, project, class: "table__primary" %>
-                    <span class="table__secondary"><%= project.text.presence || "No description" %></span>
-                  </td>
-                  <td class="is-numeric quiet"><%= short_date(project.created_at) %></td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        </div>
-      <% else %>
-        <div class="empty">
-          <p class="empty__title">No projects yet</p>
-          <p>Projects are the example tenant-scoped resource. Create one to see scoping at work.</p>
-          <p style="margin-top: var(--space-4);">
-            <%= link_to "Create the first project", new_project_path, class: "btn" %>
-          </p>
-        </div>
-      <% end %>
-    </section>
+    </div>
   </div>
 
   <aside class="stack--loose stack">
-    <section class="panel panel--sunken">
-      <div class="panel__header"><h2>Team</h2></div>
-      <div class="stat">
-        <span class="stat__value numeric"><%= current_team.seat_count %></span>
-        <span class="stat__label">Members</span>
+    <section class="panel jar">
+      <div class="panel__header">
+        <h2>The jar</h2>
+        <button type="button" class="btn-link jar__sound"
+                data-checklist-target="sound" data-action="checklist#toggleSound"
+                aria-pressed="true">Sound on</button>
       </div>
-      <% if @pending_invitations.positive? %>
-        <p class="muted" style="margin-top: var(--space-4);">
-          <%= pluralize(@pending_invitations, "invitation") %> pending.
-        </p>
-      <% end %>
-      <p style="margin-top: var(--space-4);">
-        <%= link_to "Manage members", team_members_path(current_team), class: "btn btn--sm" %>
-      </p>
+
+      <div class="stat jar__stat">
+        <span class="stat__value numeric jar__count" id="jar_count"
+              data-checklist-target="count"><%= @done_today.size %></span>
+        <span class="stat__label">Done today</span>
+      </div>
+
+      <ul class="checklist checklist--done" id="done_today">
+        <%= render partial: "tasks/done_task", collection: @done_today, as: :task %>
+      </ul>
+      <p class="jar__empty">Empty for now. Tick something and watch.</p>
+
+      <p class="jar__more"><%= link_to "The whole done pile", tasks_path, class: "btn-link" %></p>
     </section>
 
-    <% if policy(billing_subject_for(current_team)).show? %>
-      <section class="panel panel--sunken">
-        <div class="panel__header"><h2>Billing</h2></div>
-        <p><%= subscription_badge(current_team.subscription) %></p>
-        <p style="margin-top: var(--space-4);">
-          <%= link_to "Billing settings", billing_subscription_path, class: "btn btn--sm" %>
-        </p>
-      </section>
-    <% end %>
+    <section class="panel panel--sunken">
+      <div class="panel__header"><h2>Plug things in</h2></div>
+      <p class="muted">Let Claude Code and Codex drop a task here when they finish or need you.</p>
+      <p style="margin-top: var(--space-4);">
+        <%= link_to "Connect your agents", connection_path, class: "btn btn--sm" %>
+      </p>
+    </section>
   </aside>
+
+  <p class="cheer" data-checklist-target="cheer" role="status" aria-live="polite"></p>
 </div>

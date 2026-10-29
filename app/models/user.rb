@@ -45,8 +45,8 @@ class User < ApplicationRecord
 
   has_many :memberships, dependent: :destroy
   has_many :teams, through: :memberships
-  has_many :owned_projects, class_name: "Project", foreign_key: :created_by_id,
-                            dependent: :nullify, inverse_of: :created_by
+  has_many :created_tasks, class_name: "Task", foreign_key: :created_by_id,
+                           dependent: :nullify, inverse_of: :created_by
   has_many :sent_invitations, class_name: "TeamInvitation", foreign_key: :invited_by_id,
                               dependent: :destroy, inverse_of: :invited_by
   has_many :impersonation_events, dependent: :destroy

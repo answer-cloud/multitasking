@@ -5,6 +5,7 @@
 # Table name: teams
 #
 #  id                 :bigint           not null, primary key
+#  inbox_token        :string           not null
 #  name               :string           not null
 #  slug               :string           not null
 #  created_at         :datetime         not null
@@ -13,6 +14,7 @@
 #
 # Indexes
 #
+#  index_teams_on_inbox_token         (inbox_token) UNIQUE
 #  index_teams_on_slug                (slug) UNIQUE
 #  index_teams_on_stripe_customer_id  (stripe_customer_id) UNIQUE
 #
@@ -20,7 +22,7 @@ class Team < ApplicationRecord
   has_many :memberships, dependent: :destroy
   has_many :users, through: :memberships
   has_many :invitations, class_name: "TeamInvitation", dependent: :destroy
-  has_many :projects, dependent: :destroy
+  has_many :tasks, dependent: :destroy
   has_one :subscription, dependent: :destroy
 
   validates :name, presence: true, length: { maximum: 120 }
@@ -31,6 +33,9 @@ class Team < ApplicationRecord
                      with: /\A[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\z/,
                      message: "may only contain lowercase letters, numbers and hyphens"
                    }
+
+  # The secret in the address a hook posts tasks to. See Inbox::TasksController.
+  has_secure_token :inbox_token
 
   before_validation :generate_slug, on: :create
 

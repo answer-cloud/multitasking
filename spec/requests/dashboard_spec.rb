@@ -25,16 +25,17 @@ RSpec.describe "Dashboard" do
     expect(response.body).to include("Northwind")
   end
 
-  it "shows only the active team's projects" do
-    a = create_tenant
-    b = create_tenant
-    create(:project, team: a.team, name: "Visible project")
-    create(:project, team: b.team, name: "Hidden project")
+  it "shows what is left to do and what went in the jar today" do
+    tenant = create_tenant
+    create(:task, team: tenant.team, title: "Still to do")
+    create(:task, :done, team: tenant.team, title: "Finished today")
+    create(:task, team: tenant.team, completed_at: 2.days.ago, title: "Finished last week")
+    sign_in tenant.owner
 
-    sign_in a.owner
     get dashboard_path
 
-    expect(response.body).to include("Visible project")
-    expect(response.body).not_to include("Hidden project")
+    expect(response.body).to include("Still to do")
+    expect(response.body).to include("Finished today")
+    expect(response.body).not_to include("Finished last week")
   end
 end

@@ -75,8 +75,6 @@
       <% end %>
       <dt>Stripe customer</dt>
       <dd><code><%= @team.stripe_customer_id || "—" %></code></dd>
-      <dt>Projects</dt>
-      <dd class="numeric"><%= @project_count %></dd>
       <dt>Created</dt>
       <dd><%= short_datetime(@team.created_at) %></dd>
     </dl>

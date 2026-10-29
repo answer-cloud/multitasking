@@ -1,0 +1,52 @@
+<% content_for :title, @task.title %>
+
+<%= page_title @task.title, description: @task.done? ? "Done. In the jar." : "Still to do." do %>
+  <% if policy(@task).complete? %>
+    <% if @task.done? %>
+      <%= button_to "Put it back on the list", task_completion_path(@task), method: :delete, class: "btn",
+            form: { data: { turbo: false } } %>
+    <% else %>
+      <%= button_to "Mark done", task_completion_path(@task), class: "btn btn--primary",
+            form: { data: { turbo: false } } %>
+    <% end %>
+  <% end %>
+  <% if policy(@task).update? %>
+    <%= link_to "Edit", edit_task_path(@task), class: "btn btn--ghost" %>
+  <% end %>
+<% end %>
+
+<div class="split">
+  <div class="stack">
+    <% if @task.notes.present? %>
+      <%= simple_format(@task.notes) %>
+    <% else %>
+      <p class="muted">No notes.</p>
+    <% end %>
+
+    <% if @task.link %>
+      <p><%= open_link(@task, "Open where this came from ↗", css: "btn") %></p>
+    <% end %>
+  </div>
+
+  <aside class="panel panel--sunken">
+    <dl class="detail-list">
+      <dt>From</dt>
+      <dd><%= source_badge(@task) %></dd>
+      <dt>Added by</dt>
+      <dd><%= @task.created_by&.name || "—" %></dd>
+      <dt>Added</dt>
+      <dd><%= short_datetime(@task.created_at) %></dd>
+      <dt>Last activity</dt>
+      <dd><%= short_datetime(@task.last_activity_at) %></dd>
+      <dt>Done</dt>
+      <dd><%= short_datetime(@task.completed_at) %></dd>
+    </dl>
+
+    <% if policy(@task).destroy? %>
+      <p style="margin-top: var(--space-5);">
+        <%= button_to "Delete task", @task, method: :delete, class: "btn-link btn-link--danger",
+              form: { data: { turbo_confirm: "Delete this task for good?" } } %>
+      </p>
+    <% end %>
+  </aside>
+</div>

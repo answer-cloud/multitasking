@@ -1,0 +1,20 @@
+<%# A task still to do. The checkbox is a real submit button inside a real %>
+<%# form, so ticking works without JavaScript; checklist#check adds the fun. %>
+<li id="<%= dom_id(task) %>" class="checklist__item" data-checklist-item>
+  <%= form_with url: task_completion_path(task), method: :post, class: "checklist__form" do %>
+    <button type="submit" class="checkbox" role="checkbox" aria-checked="false"
+            aria-label="Done: <%= task.title %>"
+            data-action="checklist#check">
+      <%= render "tasks/tick" %>
+    </button>
+  <% end %>
+
+  <div class="checklist__body">
+    <%= link_to task.title, task, class: "checklist__title" %>
+    <span class="checklist__meta">
+      <%= source_badge(task) %>
+      <%= open_link(task) %>
+      <%= quiet_note(task) %>
+    </span>
+  </div>
+</li>

@@ -1,0 +1,61 @@
+<% content_for :title, "Connect your agents" %>
+<% hook = Rails.root.join("script/agent-hook").to_s %>
+
+<%= page_title "Connect your agents",
+      description: "When Claude Code or Codex finishes a turn or needs you, a task lands in #{current_team.name}’s list. Ping it again and the same task bounces back to the top." %>
+
+<div class="split">
+  <div class="stack--loose stack">
+    <section class="stack">
+      <h2>1. Save your token</h2>
+      <p class="muted">Run this once. The hook reads it from this file, so the token never sits in a settings file you might share.</p>
+      <div data-controller="clipboard">
+        <pre data-clipboard-target="source">mkdir -p ~/.config/multitasking && printf 'url=<%= request.base_url %>\ntoken=<%= current_team.inbox_token %>\n' > ~/.config/multitasking/config && chmod 600 ~/.config/multitasking/config</pre>
+        <button type="button" class="btn btn--sm" data-clipboard-target="button" data-action="clipboard#copy">Copy</button>
+      </div>
+    </section>
+
+    <section class="stack">
+      <h2>2. Claude Code</h2>
+      <p class="muted">Add this to <code>~/.claude/settings.json</code>. <code>Stop</code> fires when Claude finishes a turn; <code>Notification</code> fires when it is waiting on you.</p>
+      <div data-controller="clipboard">
+        <pre data-clipboard-target="source"><%= JSON.pretty_generate(
+              "hooks" => {
+                "Stop" => [ { "hooks" => [ { "type" => "command", "command" => "#{hook} claude" } ] } ],
+                "Notification" => [ { "hooks" => [ { "type" => "command", "command" => "#{hook} claude" } ] } ]
+              }
+            ) %></pre>
+        <button type="button" class="btn btn--sm" data-clipboard-target="button" data-action="clipboard#copy">Copy</button>
+      </div>
+    </section>
+
+    <section class="stack">
+      <h2>3. Codex</h2>
+      <p class="muted">Add this line to <code>~/.codex/config.toml</code>. Codex calls it after every turn.</p>
+      <div data-controller="clipboard">
+        <pre data-clipboard-target="source">notify = ["<%= hook %>", "codex"]</pre>
+        <button type="button" class="btn btn--sm" data-clipboard-target="button" data-action="clipboard#copy">Copy</button>
+      </div>
+    </section>
+
+    <section class="stack">
+      <h2>Anything else</h2>
+      <p class="muted">Any tool can post JSON to the inbox. Send the same <code>external_id</code> twice and it updates one task.</p>
+      <pre>curl -X POST <%= inbox_tasks_url %> \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Reply to Sam","source":"slack","url":"https://…","external_id":"C123-1712"}'</pre>
+    </section>
+  </div>
+
+  <aside class="panel panel--sunken">
+    <div class="panel__header"><h2>Inbox token</h2></div>
+    <p class="muted">Anyone with this token can add tasks to this team. Nothing else.</p>
+    <% if policy(current_team).update? %>
+      <p style="margin-top: var(--space-4);">
+        <%= button_to "Make a new token", connection_path, method: :patch, class: "btn btn--sm",
+              form: { data: { turbo_confirm: "The old token stops working at once. Carry on?" } } %>
+      </p>
+    <% end %>
+  </aside>
+</div>
