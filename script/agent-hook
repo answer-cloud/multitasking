@@ -48,6 +48,14 @@ def summary(text, length = 80)
   sentence.length > length ? "#{sentence[0, length].sub(/\s+\S*\z/, "")}…" : sentence
 end
 
+# Text pasted into a prompt, which the Claude desktop app wraps in tags. It
+# belongs in the session, not in a task's title or notes.
+PASTED = %r{<pasted_content[^>]*>.*?</pasted_content[^>]*>}m
+
+def without_pastes(text)
+  text.to_s.gsub(PASTED, " ").strip
+end
+
 def project_name(cwd)
   cwd.to_s.empty? ? "somewhere" : File.basename(cwd)
 end
@@ -97,6 +105,16 @@ def first_prompt(entries)
   nil
 end
 
+# The short name the session was given, as the Claude desktop app's sidebar
+# shows it. The app names a session a few seconds in, so only a turn quicker
+# than that misses it; the next ping puts the name right. A rename adds a
+# line, so the last one wins.
+def session_title(entries)
+  entries.select { |entry| entry["type"] == "custom-title" }
+         .map { |entry| one_line(entry["customTitle"]) }
+         .reject(&:empty?).last
+end
+
 # What Claude said last — usually its summary of the turn. Newer Claude Code
 # sends it with the hook; the transcript is the fallback, and may be a line
 # behind on Stop, so it is only the fallback.
@@ -127,7 +145,8 @@ def claude_task(input)
   project = project_name(input["cwd"])
   entries = transcript_entries(input["transcript_path"])
   prompt = first_prompt(entries)
-  topic = one_line(prompt || "session in #{project}")
+  asked = without_pastes(prompt)
+  topic = session_title(entries) || (asked.empty? ? "session in #{project}" : summary(asked))
   waiting = input["hook_event_name"] == "Notification"
 
   {
@@ -137,7 +156,7 @@ def claude_task(input)
     url: claude_link,
     directory: repository(input["cwd"]),
     prompt: one_line(prompt),
-    notes: notes(input["message"], last_reply(input, entries), prompt, input["cwd"])
+    notes: notes(input["message"], last_reply(input, entries), asked, input["cwd"])
   }
 end
 
