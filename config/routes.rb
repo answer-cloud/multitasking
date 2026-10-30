@@ -23,10 +23,20 @@ Rails.application.routes.draw do
   # --- Signed-in application ----------------------------------------------
   get "dashboard", to: "dashboard#show", as: :dashboard
 
-  resources :tasks, only: %i[index show create edit update destroy] do
+  resources :tasks, only: %i[index show new create edit update destroy] do
     # Checking off is creating a completion; unchecking destroys it.
     resource :completion, only: %i[create destroy], module: :tasks
+    # Pinning it in the priority list, and letting it back down.
+    resource :priority, only: %i[create destroy], module: :tasks
+    # Filing it under a project, from the picker in its row.
+    resource :project, only: :update, module: :tasks
+    # Dragging it up or down the list.
+    resource :position, only: :update, module: :tasks
+    # Handing it to Claude or Codex, which opens a new session on it.
+    resource :handoff, only: :create, module: :tasks
   end
+
+  resources :projects
 
   # The page that sets up the hooks, and rotates the inbox token they use.
   resource :connection, only: %i[show update]
@@ -95,4 +105,9 @@ Rails.application.routes.draw do
 
   # --- Health --------------------------------------------------------------
   get "up" => "rails/health#show", as: :rails_health_check
+
+  # --- Web app manifest ------------------------------------------------------
+  # Name, icon and colours for "Add to Home Screen". No service worker: the app
+  # is not offline-capable and should not pretend to be.
+  get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
 end

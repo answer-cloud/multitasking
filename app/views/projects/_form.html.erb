@@ -1,0 +1,40 @@
+<%= form_with model: project, class: "form" do |form| %>
+  <%= render "shared/form_errors", record: project %>
+
+  <div class="field">
+    <%= form.label :name, class: "field__label" %>
+    <%= form.text_field :name, class: "input", maxlength: 120, required: true, autofocus: true,
+          "aria-invalid": project.errors.include?(:name) %>
+  </div>
+
+  <div class="field">
+    <%= form.label :alias_list, "Also called", class: "field__label" %>
+    <%= form.text_field :alias_list, class: "input", placeholder: "Slater, Slater Sweet",
+          autocomplete: "off", "aria-invalid": project.errors.include?(:aliases) %>
+    <p class="field__hint">Optional. Other names, separated by commas. Start a task with this project's name or any of these, typed or said, and it lands here.</p>
+  </div>
+
+  <div class="field">
+    <%= form.label :directory, "Folder", class: "field__label" %>
+    <%= form.text_field :directory, class: "input", placeholder: "/Users/you/code/app",
+          autocomplete: "off", spellcheck: false, "aria-invalid": project.errors.include?(:directory) %>
+    <p class="field__hint">Optional. Agent tasks from this folder, or any folder inside it, land here.</p>
+  </div>
+
+  <div class="field" role="radiogroup" aria-labelledby="project_color_label">
+    <span class="field__label" id="project_color_label">Colour</span>
+    <div class="swatches">
+      <% Project::COLORS.each do |color| %>
+        <label class="swatch swatch--<%= color %>">
+          <%= form.radio_button :color, color, class: "swatch__control" %>
+          <span class="visually-hidden"><%= color.capitalize %></span>
+        </label>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit "Save project", class: "btn btn--primary" %>
+    <%= link_to "Cancel", project.persisted? ? project : projects_path, class: "btn btn--ghost" %>
+  </div>
+<% end %>

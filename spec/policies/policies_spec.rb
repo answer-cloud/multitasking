@@ -138,6 +138,22 @@ RSpec.describe "Policies" do
     end
   end
 
+  describe ProjectPolicy do
+    let(:project) { create(:project, team: team) }
+
+    it "lets any member make, rename and delete a project" do
+      %i[show? create? update? destroy?].each do |question|
+        expect(as(member, project, question)).to be(true)
+      end
+    end
+
+    it "refuses everything to a non-member" do
+      %i[show? create? update? destroy?].each do |question|
+        expect(as(outsider, project, question)).to be(false)
+      end
+    end
+  end
+
   describe Admin::UserPolicy do
     let(:platform_admin) { create(:user, :admin) }
 

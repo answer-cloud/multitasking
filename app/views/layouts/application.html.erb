@@ -6,11 +6,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
+    <%= render "shared/time_zone" %>
+    <%= render "shared/meta" %>
     <%= yield :head %>
-
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
-
 
     <%# Preload the Latin subset. The stylesheet only discovers the font after %>
     <%# it parses @font-face, by which time headings have already painted in %>
@@ -24,7 +22,7 @@
     <%= render "shared/impersonation_banner" %>
     <%= render "shared/masthead" %>
 
-    <main class="container" id="main">
+    <main class="container page" id="main">
       <%= yield %>
     </main>
 
@@ -34,5 +32,6 @@
     <%# padded .container makes their positioning depend on page layout. %>
     <%= render "shared/flashes" %>
     <%= render "shared/modal" %>
+    <%= render "shared/confirm" %>
   </body>
 </html>

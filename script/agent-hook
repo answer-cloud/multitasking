@@ -33,26 +33,63 @@ def config
   }
 end
 
-def shorten(text, length = 90)
-  text = text.to_s.gsub(/\s+/, " ").strip
-  text.length > length ? "#{text[0, length - 1]}…" : text
+# One line, but all of it: the app shows a title in full, so cutting it here
+# only loses the end of what you asked for.
+def one_line(text)
+  text.to_s.gsub(/\s+/, " ").strip
+end
+
+# The opening sentence of a prompt, cut at a word if it is still long. A
+# prompt that pastes in a bug report runs to paragraphs, and the task's notes
+# already carry it in full.
+def summary(text, length = 80)
+  text = one_line(text)
+  sentence = (text[/\A.+?[.?!](?=\s|\z)/] || text).delete_suffix(".")
+  sentence.length > length ? "#{sentence[0, length].sub(/\s+\S*\z/, "")}…" : sentence
 end
 
 def project_name(cwd)
   cwd.to_s.empty? ? "somewhere" : File.basename(cwd)
 end
 
+# The repository a session ran in, so the app can file the task under its
+# project. The main checkout, not the worktree: a worktree's path changes with
+# every session, the repository's does not. Nil outside a repository, where
+# there is no telling what the folder is.
+def repository(cwd)
+  return if cwd.to_s.empty? || !Dir.exist?(cwd)
+
+  git_dir = IO.popen([ "git", "-C", cwd, "rev-parse", "--path-format=absolute", "--git-common-dir" ],
+                     err: File::NULL, &:read).strip
+  File.dirname(git_dir) if $?.success? && File.basename(git_dir) == ".git"
+rescue SystemCallError
+  nil
+end
+
+# Keeps the line breaks, unlike `one_line`: notes are shown as paragraphs.
+def clip(text, length = 500)
+  text = text.to_s.strip
+  text.length > length ? "#{text[0, length - 1]}…" : text
+end
+
+def transcript_entries(transcript_path)
+  return [] if transcript_path.to_s.empty? || !File.exist?(transcript_path)
+
+  File.foreach(transcript_path).map { |line| JSON.parse(line) rescue nil }.compact
+end
+
+def entry_text(entry)
+  content = entry.dig("message", "content")
+  content.is_a?(Array) ? content.select { |part| part["type"] == "text" }.map { |part| part["text"] }.join("\n\n") : content.to_s
+end
+
 # The first thing you asked for in this session, which is a better task title
 # than a session id. Skips the wrappers Claude Code stores around commands.
-def first_prompt(transcript_path)
-  return if transcript_path.to_s.empty? || !File.exist?(transcript_path)
-
-  File.foreach(transcript_path) do |line|
-    entry = JSON.parse(line) rescue next
+def first_prompt(entries)
+  entries.each do |entry|
     next unless entry["type"] == "user"
 
-    content = entry.dig("message", "content")
-    text = content.is_a?(Array) ? content.select { |part| part["type"] == "text" }.map { |part| part["text"] }.join(" ") : content.to_s
+    text = entry_text(entry)
     next if text.strip.empty? || text.lstrip.start_with?("<")
 
     return text
@@ -60,30 +97,123 @@ def first_prompt(transcript_path)
   nil
 end
 
+# What Claude said last — usually its summary of the turn. Newer Claude Code
+# sends it with the hook; the transcript is the fallback, and may be a line
+# behind on Stop, so it is only the fallback.
+def last_reply(input, entries)
+  sent = input["last_assistant_message"].to_s
+  return sent unless sent.strip.empty?
+
+  entries.reverse_each
+         .select { |entry| entry["type"] == "assistant" && !entry["isSidechain"] }
+         .map { |entry| entry_text(entry) }
+         .find { |text| !text.strip.empty? }
+end
+
+# Opens the session in the Claude desktop app. Only a session the app started
+# has a link: it gives the hook its own `local_` id, which is the one
+# claude://code/continue accepts. A session run in a terminal has none.
+def claude_link
+  id = ENV["CLAUDE_CODE_HOST_SESSION_ID"].to_s
+  "claude://code/continue?session=#{id}" if id.match?(/\Alocal_[\w-]+\z/)
+end
+
+# Opens the thread in the Codex app — the same link its "Copy link" gives.
+def codex_link(thread_id)
+  "codex://threads/#{thread_id}" if thread_id.to_s.match?(/\A[\w-]+\z/)
+end
+
 def claude_task(input)
   project = project_name(input["cwd"])
-  topic = shorten(first_prompt(input["transcript_path"]) || "session in #{project}")
+  entries = transcript_entries(input["transcript_path"])
+  prompt = first_prompt(entries)
+  topic = one_line(prompt || "session in #{project}")
   waiting = input["hook_event_name"] == "Notification"
 
   {
     source: "claude",
     external_id: input["session_id"],
     title: waiting ? "Claude needs you: #{topic}" : "Review Claude: #{topic}",
-    notes: [ input["message"], "Project: #{input["cwd"]}" ].compact.join("\n\n")
+    url: claude_link,
+    directory: repository(input["cwd"]),
+    prompt: one_line(prompt),
+    notes: notes(input["message"], last_reply(input, entries), prompt, input["cwd"])
   }
+end
+
+# What you need to pick the task up without opening the session: why it
+# pinged, what the agent last said, what you asked for, and where.
+def notes(alert, reply, prompt, cwd)
+  [
+    (clip(alert, 300) unless alert.to_s.strip.empty?),
+    (clip(reply) unless reply.to_s.strip.empty?),
+    ("You asked: #{clip(prompt)}" unless prompt.to_s.strip.empty?),
+    ("Project: #{cwd}" unless cwd.to_s.empty?)
+  ].compact.join("\n\n")
+end
+
+# Codex names each new thread by running a hidden turn of its own, and notify
+# fires for that one too. Its prompt is Codex's instructions for writing a
+# title, not anything you asked for, so it is not a task.
+CODEX_TITLE_TURN = /\A\s*You are a helpful assistant\. You will be presented with a user prompt, and your job is to provide a short title/
+
+# A thread Codex started to help with yours. It has its own thread id and fires
+# notify like any other, but its work reaches you through the thread that
+# started it, so a task for each one would only repeat yours. notify does not
+# say which kind it is; the first line of the thread's rollout file does.
+def codex_home
+  ENV["CODEX_HOME"] || File.expand_path("~/.codex")
+end
+
+def codex_subagent?(thread_id)
+  return false unless thread_id.to_s.match?(/\A[\w-]+\z/)
+
+  sessions = File.join(codex_home, "sessions")
+  rollout = Dir.glob(File.join(sessions, "**", "rollout-*-#{thread_id}.jsonl")).first
+  return false if rollout.nil?
+
+  meta = JSON.parse(File.open(rollout, encoding: "UTF-8", &:gets).to_s)["payload"].to_h
+  meta["thread_source"] == "subagent" || meta["source"].is_a?(Hash) && meta["source"].key?("subagent")
+rescue JSON::ParserError, SystemCallError
+  false
+end
+
+# The short name Codex gave the thread, as its sidebar shows it. Codex names a
+# thread a second or two after it starts, so only a turn quicker than that
+# misses it; the next turn's ping puts the name right. A rename adds a line,
+# so the last one wins.
+def codex_thread_name(thread_id)
+  return unless thread_id.to_s.match?(/\A[\w-]+\z/)
+
+  index = File.join(codex_home, "session_index.jsonl")
+  return unless File.exist?(index)
+
+  File.foreach(index).select { |line| line.include?(thread_id) }.map { |line| JSON.parse(line) rescue nil }.compact
+      .select { |entry| entry["id"] == thread_id }
+      .map { |entry| one_line(entry["thread_name"]) }
+      .reject(&:empty?).last
+rescue SystemCallError
+  nil
 end
 
 def codex_task(input)
   return unless input["type"] == "agent-turn-complete"
+  return if codex_subagent?(input["thread-id"])
 
   project = project_name(input["cwd"])
-  topic = shorten(Array(input["input-messages"]).first || "thread in #{project}")
+  prompt = Array(input["input-messages"]).first
+  return if prompt.to_s.match?(CODEX_TITLE_TURN)
+
+  topic = codex_thread_name(input["thread-id"]) || (prompt ? summary(prompt) : "thread in #{project}")
 
   {
     source: "codex",
     external_id: input["thread-id"] || input["turn-id"],
     title: "Review Codex: #{topic}",
-    notes: [ shorten(input["last-assistant-message"], 500), ("Project: #{input["cwd"]}" if input["cwd"]) ].compact.join("\n\n")
+    url: codex_link(input["thread-id"]),
+    directory: repository(input["cwd"]),
+    prompt: one_line(prompt),
+    notes: notes(nil, input["last-assistant-message"], prompt, input["cwd"])
   }
 end
 

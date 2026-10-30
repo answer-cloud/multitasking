@@ -1,0 +1,6 @@
+<%# Tells the server which time zone this browser is in. SetsTimeZone reads it. %>
+<%# The sign-in page sets it too, so the first dashboard is already local. %>
+<script>
+  document.cookie = "time_zone=" + encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone) +
+    "; path=/; max-age=31536000; samesite=lax"
+</script>

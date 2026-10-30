@@ -1,4 +1,4 @@
 <%# checklist#check holds the remove back until the send-off animation ends. %>
 <%= turbo_stream.remove @task %>
-<%= turbo_stream.prepend "done_today", partial: "tasks/done_task", locals: { task: @task } %>
-<%= turbo_stream.update "jar_count", current_team.tasks.done_today.count.to_s %>
+<%= turbo_stream.replace "done_today", partial: "tasks/done_today", locals: { tasks: @done_today } %>
+<%= turbo_stream.update_all "[data-done-count]", current_team.tasks.done_today.count.to_s %>

@@ -60,6 +60,10 @@ module Multitasking
     # so renaming the application does not mean hunting through templates.
     config.x.app_name = ENV.fetch("APP_NAME", "Multitasking")
 
+    # One line about the product, for search results, link previews and the
+    # manifest. A page with something better to say sets content_for :description.
+    config.x.app_description = "One cheerful inbox for everything you're juggling. Tick it off and watch the pile grow."
+
     # Application-wide host, used by mailers and anything building absolute URLs.
     config.x.app_host     = ENV.fetch("APP_HOST", "localhost:3000")
     config.x.app_protocol = ENV.fetch("APP_PROTOCOL", "http")

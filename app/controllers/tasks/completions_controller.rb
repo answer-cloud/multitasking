@@ -14,7 +14,7 @@ module Tasks
       @task.complete! unless @task.done?
 
       respond_to do |format|
-        format.turbo_stream
+        format.turbo_stream { @done_today = done_today }
         format.html { redirect_to dashboard_path, status: :see_other }
       end
     end
@@ -24,7 +24,7 @@ module Tasks
       @task.reopen! if @task.done?
 
       respond_to do |format|
-        format.turbo_stream
+        format.turbo_stream { @done_today = done_today }
         format.html { redirect_back fallback_location: dashboard_path, status: :see_other }
       end
     end
@@ -33,6 +33,11 @@ module Tasks
 
     def set_task
       @task = current_team.tasks.find(params[:task_id])
+    end
+
+    # The stream redraws the whole done list, newest first.
+    def done_today
+      policy_scope(current_team.tasks.done_today.recently_done.includes(:project))
     end
   end
 end

@@ -24,6 +24,7 @@
   padding: var(--space-6);
   background-color: var(--paper);
   border: var(--border-strong);
+  border-radius: var(--radius-lg);
 }
 
 .modal__header {
@@ -53,4 +54,49 @@
 
   &:hover { color: var(--ink); }
   &:focus-visible { @include focus-ring; }
+}
+
+// --- Confirm -----------------------------------------------------------------
+// The "are you sure?" every data-turbo-confirm asks, in a native <dialog>:
+// nothing has to load into it, so the reason .modal avoids one does not apply,
+// and showModal() brings the backdrop, Esc and the focus trap for free.
+
+.confirm {
+  width: calc(100% - var(--space-5) * 2);
+  max-width: var(--width-narrow);
+  padding: 0;
+  background-color: var(--paper);
+  border: var(--border-strong);
+  border-radius: var(--radius-lg);
+  color: var(--ink);
+
+  &::backdrop { background-color: rgb(0 0 0 / 45%); }
+
+  @include playful-motion {
+    &[open] { animation: confirm-pop 260ms var(--spring); }
+  }
+}
+
+.confirm__panel {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-6);
+}
+
+.confirm__message {
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-snug);
+}
+
+.confirm__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: flex-end;
+}
+
+@keyframes confirm-pop {
+  from { opacity: 0; transform: translateY(0.75rem) scale(0.96); }
+  to   { opacity: 1; transform: none; }
 }

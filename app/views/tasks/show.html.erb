@@ -11,7 +11,7 @@
     <% end %>
   <% end %>
   <% if policy(@task).update? %>
-    <%= link_to "Edit", edit_task_path(@task), class: "btn btn--ghost" %>
+    <%= link_to "Edit", edit_task_path(@task), class: "btn" %>
   <% end %>
 <% end %>
 
@@ -28,10 +28,12 @@
     <% end %>
   </div>
 
-  <aside class="panel panel--sunken">
-    <dl class="detail-list">
+  <aside class="panel panel--sunken stack--loose">
+    <dl class="detail-list detail-list--stacked">
       <dt>From</dt>
       <dd><%= source_badge(@task) %></dd>
+      <dt>Project</dt>
+      <dd><%= @task.project ? link_to(@task.project.name, @task.project) : Project::OTHER %></dd>
       <dt>Added by</dt>
       <dd><%= @task.created_by&.name || "—" %></dd>
       <dt>Added</dt>
@@ -43,10 +45,8 @@
     </dl>
 
     <% if policy(@task).destroy? %>
-      <p style="margin-top: var(--space-5);">
-        <%= button_to "Delete task", @task, method: :delete, class: "btn-link btn-link--danger",
-              form: { data: { turbo_confirm: "Delete this task for good?" } } %>
-      </p>
+      <%= button_to "Delete task", @task, method: :delete, class: "btn-link btn-link--danger",
+            form: { data: { turbo_confirm: "Delete this task for good?" } } %>
     <% end %>
   </aside>
 </div>

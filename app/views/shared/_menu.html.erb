@@ -1,0 +1,50 @@
+<%# Everything that is not today's list, in one menu: the done pile, the %>
+<%# agent connection, the team, the account. The page stays on the list. %>
+<div class="dropdown" data-controller="dropdown">
+  <button type="button" class="masthead__link"
+          data-dropdown-target="button"
+          data-action="dropdown#toggle"
+          aria-haspopup="true"
+          aria-expanded="false">Menu</button>
+
+  <div class="dropdown__menu" data-dropdown-target="menu" hidden>
+    <%= link_to "To do", dashboard_path, class: "dropdown__item",
+          "aria-current": current_page?(dashboard_path) ? "page" : nil %>
+    <%= link_to "Done pile", tasks_path, class: "dropdown__item",
+          "aria-current": controller_name == "tasks" ? "page" : nil %>
+    <%= link_to "Projects", projects_path, class: "dropdown__item",
+          "aria-current": controller_name == "projects" ? "page" : nil %>
+    <%= link_to "Connect agents", connection_path, class: "dropdown__item",
+          "aria-current": controller_name == "connections" ? "page" : nil %>
+
+    <% if current_team %>
+      <hr class="dropdown__divider">
+      <span class="dropdown__label"><%= current_team.name %></span>
+
+      <%= link_to "Members", team_members_path(current_team), class: "dropdown__item" %>
+      <% if policy(current_team).update? %>
+        <%= link_to "Team settings", edit_team_path(current_team), class: "dropdown__item" %>
+      <% end %>
+      <% if policy(billing_subject_for(current_team)).show? %>
+        <%= link_to "Billing", billing_subscription_path, class: "dropdown__item" %>
+      <% end %>
+
+      <% (available_teams - [current_team]).each do |team| %>
+        <%= button_to "Switch to #{team.name}", team_switch_path(team),
+              class: "dropdown__item", form: { data: { turbo: false } } %>
+      <% end %>
+      <%= link_to "New team", new_team_path, class: "dropdown__item" %>
+    <% end %>
+
+    <hr class="dropdown__divider">
+    <span class="dropdown__label"><%= Current.user.email %></span>
+    <%= link_to "Account settings", account_path, class: "dropdown__item" %>
+
+    <% if Current.true_user&.admin? && !Current.impersonating? %>
+      <%= link_to "Platform admin", admin_root_path, class: "dropdown__item" %>
+    <% end %>
+
+    <%= button_to "Sign out", destroy_user_session_path, method: :delete,
+          class: "dropdown__item dropdown__item--danger" %>
+  </div>
+</div>

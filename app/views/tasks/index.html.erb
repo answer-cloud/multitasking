@@ -7,45 +7,65 @@
 <%= form_with url: tasks_path, method: :get, class: "filter-bar",
       data: { controller: "autosubmit", action: "input->autosubmit#submit" } do %>
   <%= search_field_tag :q, params[:q], placeholder: "Search finished tasks", class: "input" %>
+  <%= label_tag :day, "Day", class: "visually-hidden" %>
+  <%= select_tag :day, day_options(@days, @day), class: "select" %>
   <noscript><%= submit_tag "Search", class: "btn btn--sm" %></noscript>
 <% end %>
 
 <% if @page.any? %>
-  <div class="table-wrap">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Task</th>
-          <th>From</th>
-          <th class="is-numeric">Done</th>
-          <th class="is-actions"><span class="visually-hidden">Actions</span></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @page.each do |task| %>
-          <tr id="<%= dom_id(task, :done) %>">
-            <td>
-              <%= link_to task.title, task, class: "table__primary" %>
-              <span class="table__secondary"><%= truncate(task.notes, length: 80) %></span>
-            </td>
-            <td><%= source_badge(task) %></td>
-            <td class="is-numeric quiet"><%= short_datetime(task.completed_at) %></td>
-            <td class="is-actions">
-              <%= button_to "Undo", task_completion_path(task), method: :delete, class: "btn-link",
-                    form: { data: { turbo: false } } %>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
+  <%# A day can run over the end of a page; its heading shows again on the next. %>
+  <% @page.group_by { |task| task.completed_at.to_date }.each do |day, tasks| %>
+    <section class="day-group" aria-labelledby="day_<%= day.iso8601 %>">
+      <h2 class="day-group__head" id="day_<%= day.iso8601 %>">
+        <%= link_to_unless day == @day, day_label(day), tasks_path(day: day.iso8601, q: params[:q].presence) %>
+        <span class="tally numeric"><%= @days.fetch(day, tasks.size) %></span>
+      </h2>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>From</th>
+              <th class="is-numeric">At</th>
+              <th class="is-actions"><span class="visually-hidden">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% tasks.each do |task| %>
+              <tr id="<%= dom_id(task, :done) %>">
+                <td>
+                  <%= link_to task.title, task, class: "table__primary" %>
+                  <span class="table__secondary"><%= truncate(task.notes, length: 80) %></span>
+                </td>
+                <td><%= source_badge(task) %></td>
+                <td class="is-numeric quiet">
+                  <%= tag.time(task.completed_at.strftime("%H:%M"), datetime: task.completed_at.iso8601) %>
+                </td>
+                <td class="is-actions">
+                  <%= button_to "Undo", task_completion_path(task), method: :delete, class: "btn-link",
+                        form: { data: { turbo: false } } %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  <% end %>
 
   <%= render "shared/pagination", page: @page %>
 <% else %>
   <div class="empty">
-    <p class="empty__title"><%= params[:q].present? ? "Nothing matched" : "The pile is empty" %></p>
-    <p>
-      <%= params[:q].present? ? "Try a different search." : "Tick something off and it lands here." %>
-    </p>
+    <% if params[:q].present? %>
+      <p class="empty__title">Nothing matched</p>
+      <p>Try a different search<%= " or another day" if @day %>.</p>
+    <% elsif @day %>
+      <p class="empty__title">Nothing that day</p>
+      <p>Pick another day, or <%= link_to "see every day", tasks_path %>.</p>
+    <% else %>
+      <p class="empty__title">The pile is empty</p>
+      <p>Tick something off and it lands here.</p>
+    <% end %>
   </div>
 <% end %>

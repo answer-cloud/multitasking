@@ -1,0 +1,5 @@
+<%# Out of one list and onto the top of the other. A done task is in neither. %>
+<%= turbo_stream.remove @task %>
+<% unless @task.done? %>
+  <%= turbo_stream.prepend task_list_id(@task), partial: "tasks/task", locals: { task: @task, projects: current_team.projects.alphabetical } %>
+<% end %>
