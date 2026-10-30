@@ -14,6 +14,15 @@ RSpec.describe "Connections" do
     expect(response.body).to include("script/agent-hook")
   end
 
+  it "offers the save-this-tab bookmarklet, pointed at this app" do
+    sign_in tenant.member
+
+    get connection_path
+
+    expect(response.body).to include("href=\"javascript:")
+    expect(response.body).to include(CGI.escapeHTML(new_task_url.to_json))
+  end
+
   it "does not let a member rotate the token" do
     sign_in tenant.member
 

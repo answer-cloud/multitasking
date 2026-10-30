@@ -1,0 +1,11 @@
+<%# Filing a task under a project. autosubmit sends the choice the moment it %>
+<%# changes; without JavaScript the button does the same. %>
+<%= form_with model: task, url: task_project_path(task), method: :patch, class: "checklist__picker",
+      data: { controller: "autosubmit", action: "change->autosubmit#submit" } do |form| %>
+  <%= form.collection_select :project_id, projects, :id, :name, { include_blank: Project::OTHER },
+        id: dom_id(task, :project_id), class: "select", "aria-label": "Project for #{task.title}" %>
+  <noscript><%= form.submit "Move", class: "btn btn--sm" %></noscript>
+  <% if projects.empty? %>
+    <%= link_to "New project", new_project_path, class: "btn-link" %>
+  <% end %>
+<% end %>

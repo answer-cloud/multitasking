@@ -1,28 +1,36 @@
 @use "../abstracts/mixins" as *;
 
+// Buttons are the one place the system raises its voice: an ink-outlined
+// pill in heavy capitals, a bright fill on hover, and a little hop when you
+// reach for one. The hop is motion for delight, so reduced motion skips it.
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  padding: 0.55rem var(--space-4);
-  border: 1px solid var(--rule-strong);
-  border-radius: var(--radius);
-  background-color: transparent;
+  padding: 0.7rem var(--space-5);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-pill);
+  background-color: var(--paper-raised);
   color: var(--ink);
   font-size: var(--text-sm);
-  font-weight: var(--weight-bold);
+  font-weight: var(--weight-display);
   letter-spacing: var(--tracking-wide);
   line-height: 1.2;
   text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
   transition: background-color var(--transition), color var(--transition),
-              border-color var(--transition);
+              border-color var(--transition), transform 260ms var(--spring);
 
   &:hover {
-    background-color: var(--ink);
-    color: var(--paper);
+    background-color: var(--sky);
+    color: var(--pop-ink);
+  }
+
+  @include playful-motion {
+    &:hover { transform: translateY(-2px) rotate(-2deg); }
+    &:active { transform: scale(0.94); }
   }
 
   &:focus-visible { @include focus-ring; }
@@ -31,32 +39,36 @@
   &[aria-disabled="true"] {
     opacity: 0.45;
     cursor: not-allowed;
-    background-color: transparent;
+    background-color: var(--paper-raised);
     color: var(--ink);
+    transform: none;
   }
 }
 
 // The single most important action on a page. There should be one.
 .btn--primary {
-  background-color: var(--ink);
-  color: var(--paper);
+  background-color: var(--accent);
+  color: var(--accent-ink);
 
   &:hover {
-    background-color: var(--accent);
-    border-color: var(--accent);
-    color: var(--accent-ink);
+    background-color: var(--sun);
+    color: var(--pop-ink);
+  }
+
+  @include playful-motion {
+    &:hover { transform: translateY(-2px) rotate(2deg) scale(1.04); }
   }
 }
 
-// Secondary actions: no border until hovered, so a row of them stays quiet.
+// Secondary actions: no outline until hovered, so a row of them stays quiet.
 .btn--ghost {
   border-color: transparent;
+  background-color: transparent;
   color: var(--ink-secondary);
 
   &:hover {
-    background-color: transparent;
-    color: var(--ink);
-    border-color: var(--rule);
+    background-color: var(--lilac);
+    color: var(--pop-ink);
   }
 }
 
@@ -72,12 +84,12 @@
 }
 
 .btn--sm {
-  padding: 0.3rem var(--space-3);
+  padding: 0.4rem var(--space-4);
   font-size: var(--text-xs);
 }
 
 .btn--lg {
-  padding: 0.75rem var(--space-5);
+  padding: 0.95rem var(--space-6);
   font-size: var(--text-base);
 }
 

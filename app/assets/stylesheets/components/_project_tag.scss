@@ -1,0 +1,99 @@
+@use "../abstracts/mixins" as *;
+
+// A project's name behind a dot of its colour — on the list, on a pile of
+// done work, on the projects page. The word carries the meaning and the
+// colour only speeds up the glance. The dot is ringed in --pop-ink so the
+// pale fills still show on paper; Other keeps the blank one.
+
+$dot: 0.625rem;
+
+.project-tag {
+  --dot: var(--paper-sunken);
+
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+  color: inherit;
+  text-decoration: none;
+
+  &::before {
+    content: "";
+    display: inline-block;
+    width: $dot;
+    height: $dot;
+    margin-right: var(--space-2);
+    vertical-align: 0.05em;
+    border: 1px solid var(--pop-ink);
+    border-radius: 50%;
+    background-color: var(--dot);
+  }
+}
+
+// A project with a linked task goes back to it. It stays a quiet label until
+// you point at it.
+a.project-tag:hover { color: var(--ink); text-decoration: underline; }
+
+.project-tag--sun       { --dot: var(--sun); }
+.project-tag--sky       { --dot: var(--sky); }
+.project-tag--pink      { --dot: var(--pink); }
+.project-tag--leaf      { --dot: var(--leaf); }
+.project-tag--lilac     { --dot: var(--lilac); }
+.project-tag--tangerine { --dot: var(--tangerine); }
+.project-tag--teal      { --dot: var(--teal); }
+.project-tag--coral     { --dot: var(--coral); }
+.project-tag--cobalt    { --dot: var(--cobalt); }
+.project-tag--lime      { --dot: var(--lime); }
+.project-tag--orchid    { --dot: var(--orchid); }
+.project-tag--sand      { --dot: var(--sand); }
+
+// --- Picking one ---------------------------------------------------------------
+// Real radio buttons, drawn as the colour itself. The chosen one gets an ink
+// ring a step out, so the choice does not rest on colour alone.
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.swatch {
+  --dot: var(--paper-sunken);
+
+  position: relative;
+  display: block;
+  width: var(--space-6);
+  height: var(--space-6);
+  border: 2px solid var(--pop-ink);
+  border-radius: 50%;
+  background-color: var(--dot);
+  cursor: pointer;
+  transition: transform 160ms var(--spring);
+
+  &:hover { transform: scale(1.1); }
+  &:has(:checked) { outline: 2px solid var(--ink); outline-offset: 3px; }
+  &:has(:focus-visible) { @include focus-ring; outline-offset: 3px; }
+}
+
+.swatch__control {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.swatch--sun       { --dot: var(--sun); }
+.swatch--sky       { --dot: var(--sky); }
+.swatch--pink      { --dot: var(--pink); }
+.swatch--leaf      { --dot: var(--leaf); }
+.swatch--lilac     { --dot: var(--lilac); }
+.swatch--tangerine { --dot: var(--tangerine); }
+.swatch--teal      { --dot: var(--teal); }
+.swatch--coral     { --dot: var(--coral); }
+.swatch--cobalt    { --dot: var(--cobalt); }
+.swatch--lime      { --dot: var(--lime); }
+.swatch--orchid    { --dot: var(--orchid); }
+.swatch--sand      { --dot: var(--sand); }

@@ -1,0 +1,13 @@
+<%# The one dialog every data-turbo-confirm asks its question in. See %>
+<%# confirm_controller.js; the message and the button's label are filled in %>
+<%# each time it opens. %>
+<dialog class="confirm" aria-labelledby="confirm_message"
+        data-controller="confirm" data-action="close->confirm#settle click->confirm#dismiss">
+  <form method="dialog" class="confirm__panel">
+    <p class="confirm__message" id="confirm_message" data-confirm-target="message"></p>
+    <div class="confirm__actions">
+      <button value="cancel" class="btn btn--ghost" autofocus>Cancel</button>
+      <button value="confirm" class="btn btn--danger" data-confirm-target="accept">Yes</button>
+    </div>
+  </form>
+</dialog>

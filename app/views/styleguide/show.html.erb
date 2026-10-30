@@ -20,6 +20,28 @@
     ["--paper-raised", "Panels, inputs, menus — anything sitting above the page."]
   ]
 
+  palette_tokens = [
+    ["--sun",       "Hover on the primary button, the done tally, a project."],
+    ["--sky",       "Hover on a default button, the date sticker, a project."],
+    ["--pink",      "An open row's toggle, a project."],
+    ["--leaf",      "Hovering a checkbox, a project."],
+    ["--lilac",     "Hover on a ghost button, a project."],
+    ["--tangerine", "A project."],
+    ["--teal",      "A project."],
+    ["--coral",     "A project."],
+    ["--cobalt",    "A project."],
+    ["--lime",      "A project."],
+    ["--orchid",    "A project."],
+    ["--sand",      "A project."]
+  ]
+
+  radii = [
+    ["--radius-sm",   "0.375rem", "checkboxes, code"],
+    ["--radius",      "0.875rem", "inputs, panels, menus, alerts"],
+    ["--radius-lg",   "1.5rem",   "modals, empty states"],
+    ["--radius-pill", "999px",    "buttons, chips, the quick-add field"]
+  ]
+
   line_tokens = [
     ["--rule",        "Hairline borders. The system's main separator."],
     ["--rule-strong", "Structural borders — under a page header, above a table body."],
@@ -33,14 +55,14 @@
   ]
 
   type_scale = [
-    ["--text-3xl",  "clamp 2.75 → 4.5rem",     "display"],
-    ["--text-2xl",  "clamp 2.125 → 3.25rem",   "h1"],
-    ["--text-xl",   "clamp 1.625 → 2.125rem",  "h2"],
-    ["--text-lg",   "clamp 1.25 → 1.5rem",     "h3"],
-    ["--text-md",   "1.0625rem",               "h4 · lede"],
-    ["--text-base", "0.9375rem",               "body"],
-    ["--text-sm",   "0.8125rem",               "tables · forms"],
-    ["--text-xs",   "0.75rem",                 "labels"]
+    ["--text-3xl",  "clamp 3.5 → 7.5rem",      "display"],
+    ["--text-2xl",  "clamp 2.5 → 4.25rem",     "h1"],
+    ["--text-xl",   "clamp 1.875 → 2.75rem",   "h2"],
+    ["--text-lg",   "clamp 1.4375 → 1.875rem", "h3 · task titles"],
+    ["--text-md",   "1.25rem",                 "h4 · lede"],
+    ["--text-base", "1.0625rem",               "body"],
+    ["--text-sm",   "0.9375rem",               "tables · forms · buttons"],
+    ["--text-xs",   "0.8125rem",               "labels"]
   ]
 
   spacing = [
@@ -59,19 +81,20 @@
 <%= page_title "Style guide", description: "The design system, rendered from itself." %>
 
 <p class="lede">
-  An artist's sheet: heavy capitals on cream, generous whitespace, and hairline
-  rules doing the work a shadow would do elsewhere. One family, one accent, and
-  a token for every value. Everything below is live markup using
+  Heavy capitals on cream, big type, soft corners, and a handful of bright
+  colours with ink on top. Hairline rules do the work a shadow would do
+  elsewhere. One family, one small palette, and a token for every value. Everything below is live markup using
   <code>application.scss</code> — if a component changes, this page changes with it.
 </p>
 
 <ul class="sg-laws">
-  <li>Border radius</li>
+  <li>One-off corner values</li>
   <li>Gradients</li>
   <li>Decorative shadow</li>
   <li>Second typeface</li>
   <li>Utility classes</li>
   <li class="is-yes">Hairlines</li>
+  <li class="is-yes">Pills</li>
   <li class="is-yes">Tokens only</li>
 </ul>
 
@@ -99,6 +122,17 @@
   <span class="sg-sub">Paper — grounds</span>
   <div class="grid grid--3">
     <% paper_tokens.each do |token, use| %>
+      <div class="sg-swatch">
+        <div class="sg-swatch__chip" style="background-color: var(<%= token %>);"></div>
+        <div class="sg-swatch__meta"><span class="sg-swatch__name"><%= token %></span></div>
+        <p class="sg-swatch__use"><%= use %></p>
+      </div>
+    <% end %>
+  </div>
+
+  <span class="sg-sub">Palette — bright fills, always with --pop-ink on top</span>
+  <div class="grid grid--3">
+    <% palette_tokens.each do |token, use| %>
       <div class="sg-swatch">
         <div class="sg-swatch__chip" style="background-color: var(<%= token %>);"></div>
         <div class="sg-swatch__meta"><span class="sg-swatch__name"><%= token %></span></div>
@@ -243,6 +277,16 @@
     <% end %>
   </div>
 
+  <span class="sg-sub">Corners</span>
+  <div class="sg-ramp">
+    <% radii.each do |token, size, use| %>
+      <div class="sg-ramp__row">
+        <b><%= token %></b><span><%= size %> — <%= use %></span>
+        <div class="sg-corner" style="border-radius: var(<%= token %>);"></div>
+      </div>
+    <% end %>
+  </div>
+
   <span class="sg-sub">Breakpoints — three, mobile-first</span>
   <div class="sg-ramp">
     <div class="sg-ramp__row"><b>@include sm</b><span>40rem</span><span>640px — phone landscape and up</span></div>
@@ -255,7 +299,10 @@
 <section class="sg-section" id="buttons">
   <div class="sg-section__head">
     <h2>Buttons</h2>
-    <p class="sg-section__note">Square, hairline-bordered, and quiet until hovered.</p>
+    <p class="sg-section__note">
+      Ink-outlined pills in heavy capitals. Hover one: it fills with colour and
+      hops. Reduced motion keeps the colour and skips the hop.
+    </p>
   </div>
 
   <div class="sg-spec">
@@ -474,6 +521,55 @@
   </div>
 
   <div class="sg-spec">
+    <div class="stack">
+      <div class="swatches" role="radiogroup" aria-label="Colour">
+        <% Project::COLORS.each_with_index do |color, index| %>
+          <label class="swatch swatch--<%= color %>">
+            <%= radio_button_tag :sg_color, color, index.zero?, class: "swatch__control" %>
+            <span class="visually-hidden"><%= color.capitalize %></span>
+          </label>
+        <% end %>
+      </div>
+      <p>
+        <% Project::COLORS.each do |color| %>
+          <span class="project-tag project-tag--<%= color %>"><%= color.capitalize %></span>&ensp;
+        <% end %>
+        <span class="project-tag">Other</span>
+      </p>
+    </div>
+    <div>
+      <span class="sg-spec__class">.swatches .swatch<br>.swatch__control .swatch--sun<br>.project-tag .project-tag--sun</span>
+      <p class="sg-spec__note">
+        A project's colour, picked from the palette with real radio buttons
+        and shown as a dot before its name wherever it appears. Other keeps
+        the blank dot.
+      </p>
+    </div>
+  </div>
+
+  <div class="sg-spec">
+    <div>
+      <div class="confirm" role="presentation">
+        <div class="confirm__panel">
+          <p class="confirm__message">Delete this task for good?</p>
+          <div class="confirm__actions">
+            <button type="button" class="btn btn--ghost">Cancel</button>
+            <button type="button" class="btn btn--danger">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <span class="sg-spec__class">data-turbo-confirm<br>.confirm .confirm__panel<br>.confirm__message .confirm__actions</span>
+      <p class="sg-spec__note">
+        Every <code>data-turbo-confirm</code> asks here, in a native
+        <code>&lt;dialog&gt;</code>, instead of the browser's alert. The
+        second button takes the label of the button that asked.
+      </p>
+    </div>
+  </div>
+
+  <div class="sg-spec">
     <div class="form">
       <div class="form-errors">
         <p class="form-errors__title">2 errors stopped this from being saved</p>
@@ -581,10 +677,11 @@
       <dt>Renews</dt><dd><%= short_date(3.days.from_now) %></dd>
     </dl>
     <div>
-      <span class="sg-spec__class">.detail-list</span>
+      <span class="sg-spec__class">.detail-list<br>.detail-list--stacked</span>
       <p class="sg-spec__note">
         A definition list for one record's attributes. Collapses to stacked rows
-        below <code>40rem</code>.
+        below <code>40rem</code>. Add <code>--stacked</code> to keep it stacked
+        at every width, for a list inside a narrow rail.
       </p>
     </div>
   </div>
@@ -610,8 +707,8 @@
   <div class="sg-section__head">
     <h2>The list</h2>
     <p class="sg-section__note">
-      A catalogue of rows. Hairline between each, a plus that opens the details,
-      and nothing else competing with the work.
+      A catalogue of rows in straight columns. Hairline between each, click a
+      row to open it, and nothing else competing with the work.
     </p>
   </div>
 
@@ -640,62 +737,92 @@
     <div>
       <span class="sg-spec__class">.quick-add<br>.quick-add__input</span>
       <p class="sg-spec__note">
-        A line to write on, not a box to fill in. One strong rule under large
-        type.
+        One big pill to type into, with an ink outline that turns vermilion on
+        focus. The buttons share its height, so the row reads as one control;
+        on a phone they drop under it.
       </p>
     </div>
   </div>
 
   <div class="sg-spec">
-    <ul class="checklist">
-      <li class="checklist__item">
-        <button type="button" class="checkbox" role="checkbox" aria-checked="false" aria-label="Done: Reply to Sam about the deck">
-          <%= render "tasks/tick" %>
-        </button>
-        <details class="checklist__details" open>
-          <summary class="checklist__summary">
-            <span class="checklist__title">Reply to Sam about the deck</span>
-            <span class="checklist__meta"><span class="checklist__source">Slack</span></span>
-            <span class="checklist__toggle" aria-hidden="true"></span>
-          </summary>
-          <div class="checklist__panel">
-            <div class="checklist__notes"><p>Slides 4 to 9 still need numbers.</p></div>
-            <dl class="checklist__facts">
-              <dt>From</dt>
-              <dd>Slack</dd>
-              <dt>Added</dt>
-              <dd>2 hours ago by Ada Lovelace</dd>
-            </dl>
-            <p class="checklist__actions">
-              <a class="btn-link" href="#lists">Open ↗</a>
-              <a class="btn-link" href="#lists">Edit</a>
-            </p>
-          </div>
-        </details>
-      </li>
-      <li class="checklist__item">
-        <button type="button" class="checkbox" role="checkbox" aria-checked="false" aria-label="Done: Check on the Claude run">
-          <%= render "tasks/tick" %>
-        </button>
-        <details class="checklist__details">
-          <summary class="checklist__summary">
-            <span class="checklist__title">Check on the Claude run</span>
-            <span class="checklist__meta">
-              <span class="checklist__quiet">quiet for 3 days</span>
-              <span class="checklist__source">Claude</span>
-            </span>
-            <span class="checklist__toggle" aria-hidden="true"></span>
-          </summary>
-          <div class="checklist__panel"><p>No notes.</p></div>
-        </details>
-      </li>
-    </ul>
     <div>
-      <span class="sg-spec__class">.checklist .checklist__item<br>.checklist__details .checklist__summary<br>.checklist__panel .checklist__facts</span>
+      <div class="checklist-columns checklist-columns--starred" aria-hidden="true"><span>Task</span><span>From</span><span>Age</span></div>
+      <ul class="checklist is-sortable">
+        <li class="checklist__item">
+          <button type="button" class="checklist__handle" aria-label="Move: Reply to Sam about the deck">
+            <svg viewBox="0 0 10 16" aria-hidden="true" focusable="false">
+              <circle cx="2" cy="2" r="1.5" /><circle cx="8" cy="2" r="1.5" />
+              <circle cx="2" cy="8" r="1.5" /><circle cx="8" cy="8" r="1.5" />
+              <circle cx="2" cy="14" r="1.5" /><circle cx="8" cy="14" r="1.5" />
+            </svg>
+          </button>
+          <button type="button" class="checkbox" role="checkbox" aria-checked="false" aria-label="Done: Reply to Sam about the deck">
+            <%= render "tasks/tick" %>
+          </button>
+          <details class="checklist__details" open>
+            <summary class="checklist__summary">
+              <span class="checklist__project"><span class="project-tag project-tag--sky">Storefront</span></span>
+              <span class="checklist__title">Reply to Sam about the deck</span>
+              <span class="checklist__from"><span class="source">Slack</span></span>
+              <time class="checklist__age numeric">2h</time>
+            </summary>
+            <div class="checklist__panel">
+              <div class="checklist__notes"><p>Slides 4 to 9 still need numbers.</p></div>
+              <dl class="checklist__facts">
+                <dt>Added</dt>
+                <dd>about 2 hours ago by Ada Lovelace</dd>
+              </dl>
+              <p class="checklist__actions">
+                <a class="btn-link" href="#lists">Open ↗</a>
+                <a class="btn-link" href="#lists">Edit</a>
+              </p>
+            </div>
+          </details>
+          <button type="button" class="checklist__star" aria-pressed="true" aria-label="Priority: Reply to Sam about the deck">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" />
+            </svg>
+          </button>
+
+        <li class="checklist__item">
+          <button type="button" class="checklist__handle" aria-label="Move: Check on the Claude run">
+            <svg viewBox="0 0 10 16" aria-hidden="true" focusable="false">
+              <circle cx="2" cy="2" r="1.5" /><circle cx="8" cy="2" r="1.5" />
+              <circle cx="2" cy="8" r="1.5" /><circle cx="8" cy="8" r="1.5" />
+              <circle cx="2" cy="14" r="1.5" /><circle cx="8" cy="14" r="1.5" />
+            </svg>
+          </button>
+          <button type="button" class="checkbox" role="checkbox" aria-checked="false" aria-label="Done: Check on the Claude run">
+            <%= render "tasks/tick" %>
+          </button>
+          <details class="checklist__details">
+            <summary class="checklist__summary">
+              <span class="checklist__project"><span class="project-tag project-tag--pink">api</span></span>
+              <span class="checklist__title">Check on the Claude run</span>
+              <span class="checklist__from"><span class="source">Claude</span></span>
+              <time class="checklist__age numeric is-quiet" title="Quiet for 3 days">3d</time>
+            </summary>
+            <div class="checklist__panel"><p>No notes.</p></div>
+          </details>
+          <button type="button" class="checklist__star" aria-pressed="false" aria-label="Priority: Check on the Claude run">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" />
+            </svg>
+          </button>
+
+      </ul>
+    </div>
+    <div>
+      <span class="sg-spec__class">.checklist-columns<br>.checklist .checklist__item<br>.checklist__summary .checklist__title<br>.checklist__project .checklist__from .checklist__age<br>.checklist__handle .checklist__star .source</span>
       <p class="sg-spec__note">
-        The checkbox is a real submit button; the rest of the row is a native
-        <code>&lt;details&gt;</code>, so it opens without JavaScript. The plus
-        turns to a cross when open.
+        Rows and the labels above them share one set of column tracks, so the
+        columns run straight down the page; below md they fold under the title.
+        The project is a small capital headline over the title, not a column.
+        The rest of the row is a native <code>&lt;details&gt;</code>: click
+        anywhere and it opens, no JavaScript. The title underlines in the
+        accent to say so. Age is time since the task was last touched, and a
+        quiet one snores. The grip on the left drags a row up or down;
+        the star on the right makes it a priority and fills with sun.
       </p>
     </div>
   </div>
@@ -703,7 +830,7 @@
   <div class="sg-spec">
     <div>
       <div class="today__head">
-        <h2>Done today <span class="today__count numeric">1</span></h2>
+        <h2>Done today <span class="tally numeric">2</span></h2>
       </div>
       <ul class="checklist checklist--done">
         <li class="checklist__item is-done">
@@ -711,17 +838,32 @@
             <%= render "tasks/tick" %>
           </button>
           <div class="checklist__summary">
+            <span class="checklist__project"><span class="project-tag">Other</span></span>
             <a class="checklist__title" href="#lists">Book the dentist</a>
-            <time class="checklist__time numeric">09:41</time>
+            <span class="checklist__from"><span class="source">Spoken</span></span>
+            <time class="checklist__age numeric">09:41</time>
+          </div>
+        </li>
+        <li class="checklist__item is-done">
+          <button type="button" class="checkbox" role="checkbox" aria-checked="true" aria-label="Not done yet: Send the invoice">
+            <%= render "tasks/tick" %>
+          </button>
+          <div class="checklist__summary">
+            <span class="checklist__project"><span class="project-tag project-tag--sky">Storefront</span></span>
+            <a class="checklist__title" href="#lists">Send the invoice</a>
+            <span class="checklist__from"><span class="source">Typed</span></span>
+            <time class="checklist__age numeric">09:12</time>
           </div>
         </li>
       </ul>
     </div>
     <div>
-      <span class="sg-spec__class">.checklist--done<br>.today__head .today__count<br>.checklist__time</span>
+      <span class="sg-spec__class">.checklist--done<br>.today__head<br>.tally</span>
       <p class="sg-spec__note">
-        Under the list, what got finished today. The same rows, quieter: smaller
-        type, struck through, and the time each one went in.
+        Under the list, what got finished today, in the same columns and
+        with the same project headline: struck through, newest first, with
+        the time each one went in. Ticked boxes here are plain, with no fill.
+        <code>.tally</code> is the bright count, here and in the masthead.
       </p>
     </div>
   </div>
@@ -757,8 +899,8 @@
     <div>
       <span class="sg-spec__class">.panel<br>.panel--sunken<br>.panel__header</span>
       <p class="sg-spec__note">
-        A box with a hairline around it — not a card in the rounded-shadow sense.
-        The sunken variant drops the border and recedes instead.
+        A box with a hairline around it and soft corners — never a shadow. The
+        sunken variant drops the border and recedes instead.
       </p>
     </div>
   </div>

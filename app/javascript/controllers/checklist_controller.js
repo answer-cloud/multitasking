@@ -49,7 +49,7 @@ const MILESTONES = {
 }
 
 const SHAPES = ["square", "strip", "star"]
-const COLOURS = ["accent", "positive", "caution", "sun", "sky"]
+const COLOURS = ["accent", "sun", "sky", "pink", "leaf", "lilac"]
 const STARS = ["✦", "★", "✧", "✶"]
 const SOUND_KEY = "multitasking:sound"
 
@@ -57,8 +57,8 @@ const pick = (list) => list[Math.floor(Math.random() * list.length)]
 const between = (min, max) => min + Math.random() * (max - min)
 
 export default class extends Controller {
-  static targets = ["list", "count", "cheer", "sound"]
-  static values = { count: Number }
+  static targets = ["list", "count", "cheer", "sound", "face"]
+  static values = { count: Number, faces: Array }
 
   connect() {
     this.departures = new WeakMap()
@@ -83,6 +83,7 @@ export default class extends Controller {
     button.form.requestSubmit()
 
     const finale = this.remaining === 0
+    if (finale) this.newFace()
     this.countValue += 1
     this.chime(finale)
     this.burst(button, finale ? 90 : 28)
@@ -125,7 +126,8 @@ export default class extends Controller {
   settled(event) {
     const item = event.target.closest("[data-checklist-item]")
 
-    if (item && !event.detail.success) return this.restore(item)
+    // Only a row on its way out has anything to undo; a failed star does not.
+    if (item && !event.detail.success && item.classList.contains("is-leaving")) return this.restore(item)
     if (!item && event.detail.success) this.plip()
   }
 
@@ -209,8 +211,17 @@ export default class extends Controller {
     this.cheer("Hmm, that didn’t stick. Try again?")
   }
 
+  // A different face every time the list empties, never the one just seen.
+  newFace() {
+    if (!this.hasFaceTarget) return
+
+    const fresh = this.facesValue.filter((face) => face !== this.faceTarget.textContent)
+    if (fresh.length) this.faceTarget.textContent = pick(fresh)
+  }
+
+  // Across every list — the priority list and the rest.
   get remaining() {
-    return this.listTarget.querySelectorAll("[data-checklist-item]:not(.is-leaving)").length
+    return this.listTargets.reduce((sum, list) => sum + list.querySelectorAll("[data-checklist-item]:not(.is-leaving)").length, 0)
   }
 
   get calm() {

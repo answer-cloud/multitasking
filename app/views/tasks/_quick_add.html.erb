@@ -8,12 +8,12 @@
     <%= form.hidden_field :source, value: "typed", data: { quick_add_target: "source" } %>
     <%= form.label :title, "What needs doing?", class: "visually-hidden" %>
     <%= form.text_field :title, class: "input quick-add__input", placeholder: quick_add_placeholder,
-          autocomplete: "off", autofocus: true, maxlength: 200, required: true,
+          autocomplete: "off", autofocus: true, maxlength: Task::TITLE_LIMIT, required: true,
           data: { quick_add_target: "input" } %>
 
     <button type="button" class="btn quick-add__mic" hidden
             data-quick-add-target="mic" data-action="quick-add#listen"
-            aria-pressed="false" aria-keyshortcuts="Alt+V"
+            aria-pressed="false" aria-keyshortcuts="Meta+Shift+V Control+Shift+V"
             aria-label="Say it instead" title="Say it instead (<%= voice_shortcut_label %>)">
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" />

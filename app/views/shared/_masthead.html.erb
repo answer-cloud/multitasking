@@ -1,6 +1,13 @@
 <header class="masthead">
   <div class="container masthead__inner">
-    <%= link_to app_name, user_signed_in? ? dashboard_path : root_path, class: "masthead__brand" %>
+    <%# Signed in, the brand is today's tally; the task streams keep it current. %>
+    <% if current_team %>
+      <%= link_to dashboard_path, class: "masthead__brand" do %>
+        Done <span class="tally numeric" data-done-count><%= current_team.tasks.done_today.count %></span>
+      <% end %>
+    <% else %>
+      <%= link_to app_name, user_signed_in? ? dashboard_path : root_path, class: "masthead__brand" %>
+    <% end %>
 
     <% if Current.user %>
       <%= render "shared/menu" %>

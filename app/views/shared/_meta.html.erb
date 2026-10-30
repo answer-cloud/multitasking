@@ -1,0 +1,24 @@
+<%# What a browser, a search engine and a link preview read about the page. %>
+<%# A page sets content_for :title and :description; the app's own name and %>
+<%# line stand in when it does not. %>
+<% title = content_for(:title).presence || app_name %>
+<% description = content_for(:description).presence || app_description %>
+
+<meta name="description" content="<%= description %>">
+<meta name="color-scheme" content="light dark">
+<%# --paper in each mode, so the browser's own chrome matches the page. %>
+<meta name="theme-color" content="#f7f3e3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)">
+
+<meta property="og:site_name" content="<%= app_name %>">
+<meta property="og:type" content="website">
+<meta property="og:title" content="<%= title %>">
+<meta property="og:description" content="<%= description %>">
+<meta property="og:url" content="<%= request.original_url %>">
+<meta property="og:image" content="<%= "#{request.base_url}/icon.png" %>">
+<meta name="twitter:card" content="summary">
+
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon.png">
+<link rel="manifest" href="<%= pwa_manifest_path(format: :json) %>">

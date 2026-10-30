@@ -1,2 +1,2 @@
-<%= turbo_stream.prepend "tasks", partial: "tasks/task", locals: { task: @task } %>
+<%= turbo_stream.prepend "tasks", partial: "tasks/task", locals: { task: @task, projects: current_team.projects.alphabetical } %>
 <%= turbo_stream.update "quick_add_error", partial: "tasks/quick_add_hint", locals: { lead: "Added." } %>

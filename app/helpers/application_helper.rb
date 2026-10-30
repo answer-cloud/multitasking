@@ -4,6 +4,7 @@ module ApplicationHelper
   # The product's display name. Set it once in config/application.rb (or with
   # the APP_NAME environment variable); never write it into a template.
   def app_name = Rails.configuration.x.app_name
+  def app_description = Rails.configuration.x.app_description
 
   # Sign in with Google is on when a Google OAuth client is configured and off
   # otherwise; the button is the only thing that asks.

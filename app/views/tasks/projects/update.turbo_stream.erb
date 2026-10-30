@@ -1,0 +1,2 @@
+<%# The picker already shows the choice; only the chip in the row is stale. %>
+<%= turbo_stream.replace dom_id(@task, :project), project_badge(@task) %>

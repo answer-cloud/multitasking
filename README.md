@@ -48,7 +48,6 @@ Development mail is captured at <http://localhost:3000/dev/letter_opener>.
 | `bin/lint` | RuboCop, Brakeman, bundler-audit. `--fix` to autocorrect |
 | `bin/ci` | Everything CI runs, in the same order |
 | `bin/rename-app "Acme CRM"` | Turn this starter into a new application |
-| `bin/remove-example` | Delete the example `Project` resource |
 
 ### Conventions
 
@@ -170,8 +169,8 @@ SASS, organised as `abstracts/` (tokens, mixins, breakpoints), `base/`,
 `components/`, and `pages/`. `application.scss` is a manifest and nothing else —
 the import order is part of the design, so there is no glob.
 
-The look is editorial: strong type, generous whitespace, hairline rules, no
-border radius, no gradients, no decorative shadows. Change
+The look is playful but typographic: heavy capitals on cream, a small bright
+palette, soft corners, pill buttons, no gradients, no decorative shadows. Change
 `abstracts/_variables.scss` and the whole application follows, including dark
 mode.
 
@@ -407,34 +406,6 @@ bin/ci
 - Set your plans in `config/plans.yml` and your price ids in credentials
 - Point `abstracts/_variables.scss` at your palette and type
 - `dropdb multitasking_development multitasking_test` once you are happy
-
-### Later: delete the example resource
-
-**Not during setup.** `Project` is the worked example of tenant scoping —
-model, policy, a controller that starts every query from
-`current_team.projects`, views, and the isolation shared example. It is what
-you copy when you build your first real tenant-owned model, so deleting it on
-day one throws away the reference right before you need it.
-
-Build your own scoped resource first. Copy the shape from `app/models/project.rb`
-and `app/controllers/projects_controller.rb`, and apply the shared example in
-`spec/support/shared_examples/tenant_isolation.rb` to it. Once that works:
-
-```bash
-bin/remove-example
-bin/rails db:migrate
-bin/ci
-```
-
-Left in place, `Project` is dead code you ship: a live `/projects` route and
-table any team member can write to, nav links and a dashboard panel for a
-feature that does not exist, seed data inventing fake projects, and — the
-expensive one — no way for a new developer or a coding agent to tell
-scaffolding from real domain.
-
-The script deletes the code, associations, routes, views, seeds and specs,
-adds a migration to drop the table, and lists the prose references it
-deliberately left for you.
 
 ### Pulling template improvements into an existing app
 

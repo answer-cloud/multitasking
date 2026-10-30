@@ -1,0 +1,42 @@
+<% content_for :title, "Projects" %>
+
+<%= page_title "Projects", description: "Agent tasks land in their folder’s project. File anything else from its row on the list." do %>
+  <% if policy(current_team.projects.new).create? %>
+    <%= link_to "New project", new_project_path, class: "btn btn--primary" %>
+  <% end %>
+<% end %>
+
+<% if @projects.any? %>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Project</th>
+          <th class="is-numeric">To do</th>
+          <th class="is-actions"><span class="visually-hidden">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @projects.each do |project| %>
+          <tr>
+            <td>
+              <%= link_to project.name, project, class: "table__primary project-tag project-tag--#{project.color}" %>
+              <span class="table__secondary"><%= short_directory(project) %></span>
+            </td>
+            <td class="is-numeric"><%= @open_counts.fetch(project.id, 0) %></td>
+            <td class="is-actions">
+              <% if policy(project).update? %>
+                <%= link_to "Edit", edit_project_path(project), class: "btn-link" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <div class="empty">
+    <p class="empty__title">No projects yet</p>
+    <p>Make one, or let an agent make it: the first task from a new repository brings its project with it.</p>
+  </div>
+<% end %>

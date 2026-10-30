@@ -1,0 +1,6 @@
+<%# Plain links, so the switch works without JavaScript. The choice is %>
+<%# remembered; see DashboardController#view. %>
+<nav class="tabs__list today__views" aria-label="Show the list">
+  <%= link_to "By task", dashboard_path(view: "tasks"), class: "tabs__tab", aria: { current: ("page" if view == "tasks") } %>
+  <%= link_to "By project", dashboard_path(view: "projects"), class: "tabs__tab", aria: { current: ("page" if view == "projects") } %>
+</nav>

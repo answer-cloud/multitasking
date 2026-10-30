@@ -1,10 +1,18 @@
 @use "../abstracts/breakpoints" as *;
 
+// Edge to edge. The app uses the whole window; the narrower variants below
+// are for reading pages and small forms, where a long line is a bad line.
 .container {
   width: 100%;
-  max-width: var(--width-wide);
   margin-inline: auto;
   padding-inline: var(--gutter);
+}
+
+// The main column's breathing room under the masthead.
+.page {
+  padding-top: var(--space-5);
+
+  @include md { padding-top: var(--space-7); }
 }
 
 .container--content { max-width: var(--width-content); }
@@ -94,16 +102,19 @@
 
 .page-header__text { max-width: var(--measure); }
 .page-header__description {
-  margin-top: var(--space-2);
+  margin-top: var(--space-3);
   color: var(--ink-secondary);
 }
 
-// A bordered block. Not a "card" in the rounded-shadow sense — just a box with
-// a hairline around it.
+.page-header .eyebrow { margin-bottom: var(--space-4); }
+
+// A bordered block with soft corners. A hairline does the separating, never a
+// shadow.
 .panel {
   padding: var(--space-5);
   background-color: var(--paper-raised);
   border: var(--border);
+  border-radius: var(--radius);
 }
 
 .panel--sunken {
@@ -127,6 +138,7 @@
   padding: var(--space-7) var(--space-5);
   text-align: center;
   border: 1px dashed var(--rule);
+  border-radius: var(--radius-lg);
   color: var(--ink-secondary);
 }
 

@@ -1,0 +1,5 @@
+<%# What got finished today, newest first, each under its project's name like %>
+<%# the list above. The completion streams replace the whole thing. %>
+<ul id="done_today" class="checklist checklist--done">
+  <%= render partial: "tasks/done_task", collection: tasks, as: :task %>
+</ul>

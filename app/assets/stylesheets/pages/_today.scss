@@ -1,66 +1,125 @@
-// The dashboard. One column and one job: what is left to do today, then what
-// already got done. Everything else lives in the masthead menu.
+// The dashboard. One column, edge to edge, and one job: what is left to do
+// today, then what already got done. Everything else lives in the masthead
+// menu.
 
 @use "../abstracts/mixins" as *;
 @use "../abstracts/breakpoints" as *;
 
-.today {
-  max-width: var(--width-text);
-  margin-inline: auto;
-  padding-top: var(--space-6);
+// The title is the poster here: the biggest size in the system, with the
+// greeting set against its foot on the right. No rule under it — the list's
+// own top rule does that job.
+.today .page-header {
+  align-items: flex-end;
+  padding-bottom: 0;
+  margin-bottom: var(--space-6);
+  border-bottom: 0;
 
-  @include md { padding-top: var(--space-8); }
+  h1 { font-size: var(--text-3xl); }
 
-  // The title is the poster here, so it gets the biggest size in the system
-  // and no rule under it — the list's own top rule does that job.
-  .page-header {
-    padding-bottom: 0;
-    margin-bottom: var(--space-6);
-    border-bottom: 0;
+  // The date, as a sticker above the title.
+  .eyebrow {
+    display: inline-block;
+    padding: var(--space-1) var(--space-3);
+    background-color: var(--sky);
+    border-radius: var(--radius-pill);
+    color: var(--pop-ink);
   }
+}
 
-  .page-header h1 { font-size: var(--text-3xl); }
+.today__summary {
+  max-width: 26rem;
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+  color: var(--ink-secondary);
+  text-wrap: balance;
+
+  @include md {
+    padding-bottom: var(--space-2);
+    text-align: right;
+  }
+}
+
+// The box stays in reach while you scroll the list: it sticks to the top of
+// the window on the page's own paper, so rows slide under it rather than
+// showing through.
+.today .quick-add {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin-bottom: var(--space-8);
+  padding-block: var(--space-3);
+  background-color: var(--paper);
 }
 
 .today__section + .today__section { margin-top: var(--space-9); }
 
+// The priority list sits over the rest only while something is in it. With
+// it gone, the rest is the first section and needs no gap above it.
+.priorities:not(:has(.checklist__item)) { display: none; }
+.priorities:not(:has(.checklist__item)) + .today__section { margin-top: 0; }
+
+// Everything still to do may be a priority. That is not inbox zero.
+.today:has(.priorities .checklist__item) .checklist-empty { display: none; }
+
+// Column labels over an empty list label nothing. The empty state takes the
+// space instead.
+.today__section:not(:has(.checklist__item)) .checklist-columns { display: none; }
+
+// By task or by project, over the list.
+.today__views { margin-bottom: var(--space-5); }
+
+// By project: a heading per project and its rows under it. The heading names
+// the project, so the rows drop their own headline, and the handle and the
+// checkbox drop with it.
+.task-group + .task-group { margin-top: var(--space-7); }
+
+.task-group:not(:has(.checklist__item)) { display: none; }
+
+.task-group__head {
+  margin-bottom: var(--space-3);
+  font-size: var(--text-lg);
+}
+
+.task-groups {
+  .checklist__item { --headline: 0px; }
+  .checklist__project { display: none; }
+
+  .checklist__summary {
+    grid-template-areas: "title title" "from age";
+
+    @include md { grid-template-areas: "title from age"; }
+  }
+}
+
+.task-groups:has(.checklist__item) + .checklist-empty { display: none; }
+
 .today__head {
   display: flex;
   gap: var(--space-4);
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  padding-bottom: var(--space-3);
-  border-bottom: var(--border-strong);
+  margin-bottom: var(--space-5);
 
-  h2 { font-size: var(--text-xl); }
-}
-
-.today__count {
-  display: inline-block;
-  margin-left: var(--space-2);
-  color: var(--accent);
+  h2 {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+    font-size: var(--text-xl);
+  }
 }
 
 .today__sound { font-size: var(--text-sm); }
 
+// Nothing done yet: the empty line takes the list's place, rule and all.
+.checklist--done:not(:has(.checklist__item)) { display: none; }
+
 .today__empty {
   padding-block: var(--space-4);
+  border-top: var(--border-strong);
   border-bottom: var(--border);
   color: var(--ink-tertiary);
 }
 
 .checklist--done:has(.checklist__item) + .today__empty { display: none; }
 
-// The done list has a strong rule from its heading already.
-.today__head + .checklist { border-top: 0; }
-
-.today__more {
-  margin-top: var(--space-5);
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  font-size: var(--text-sm);
-
-  a { text-decoration: none; }
-  a:hover { text-decoration: underline; }
-}
+.today__more { margin-top: var(--space-6); }

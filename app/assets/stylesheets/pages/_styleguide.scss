@@ -63,7 +63,12 @@
 
 // --- Colour ----------------------------------------------------------------
 
-.sg-swatch { border: var(--border); background-color: var(--paper-raised); }
+.sg-swatch {
+  overflow: hidden;
+  background-color: var(--paper-raised);
+  border: var(--border);
+  border-radius: var(--radius);
+}
 
 .sg-swatch__chip { height: 5.5rem; border-bottom: var(--border); }
 
@@ -133,6 +138,14 @@
 
 .sg-ramp__bar { height: 0.75rem; max-width: 100%; background-color: var(--accent); }
 .sg-ramp__bar--rule { height: 0.4rem; background-color: var(--ink-tertiary); }
+
+// A corner specimen. The radius itself comes from the token, inline.
+.sg-corner {
+  width: 4rem;
+  height: 2.5rem;
+  background-color: var(--sun);
+  border: 2px solid var(--pop-ink);
+}
 
 // --- Component specimens ---------------------------------------------------
 

@@ -12,6 +12,8 @@
           "aria-current": current_page?(dashboard_path) ? "page" : nil %>
     <%= link_to "Done pile", tasks_path, class: "dropdown__item",
           "aria-current": controller_name == "tasks" ? "page" : nil %>
+    <%= link_to "Projects", projects_path, class: "dropdown__item",
+          "aria-current": controller_name == "projects" ? "page" : nil %>
     <%= link_to "Connect agents", connection_path, class: "dropdown__item",
           "aria-current": controller_name == "connections" ? "page" : nil %>
 

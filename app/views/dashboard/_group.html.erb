@@ -1,0 +1,7 @@
+<%# One project's share of the list. Other has no id, so it reads "". %>
+<section class="task-group" data-project-id="<%= project&.id %>" data-name="<%= project&.name&.downcase %>" data-grouped-target="group">
+  <h3 class="task-group__head"><%= project_tag(project) %></h3>
+  <ul class="checklist">
+    <%= render partial: "tasks/task", collection: tasks, as: :task, locals: { projects: projects } %>
+  </ul>
+</section>

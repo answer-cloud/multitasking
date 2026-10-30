@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_29_192738) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_30_094000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -70,6 +70,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_192738) do
     t.index ["user_id"], name: "index_memberships_on_user_id"
   end
 
+  create_table "projects", force: :cascade do |t|
+    t.string "aliases", default: [], null: false, array: true
+    t.string "color"
+    t.datetime "created_at", null: false
+    t.bigint "created_by_id"
+    t.string "directory"
+    t.string "name", null: false
+    t.bigint "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_projects_on_created_by_id"
+    t.index ["team_id", "directory"], name: "index_projects_on_team_id_and_directory", unique: true, where: "(directory IS NOT NULL)"
+    t.index ["team_id", "name"], name: "index_projects_on_team_id_and_name"
+    t.index ["team_id"], name: "index_projects_on_team_id"
+  end
+
   create_table "stripe_events", force: :cascade do |t|
     t.integer "attempts", default: 0, null: false
     t.datetime "created_at", null: false
@@ -109,14 +124,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_192738) do
     t.datetime "created_at", null: false
     t.bigint "created_by_id"
     t.string "external_id"
+    t.datetime "handed_at"
+    t.string "handed_to"
     t.datetime "last_activity_at", null: false
     t.text "notes"
+    t.integer "position", default: 0, null: false
+    t.boolean "priority", default: false, null: false
+    t.bigint "project_id"
     t.string "source", default: "typed", null: false
     t.bigint "team_id", null: false
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.string "url"
     t.index ["created_by_id"], name: "index_tasks_on_created_by_id"
+    t.index ["project_id"], name: "index_tasks_on_project_id"
     t.index ["team_id", "completed_at"], name: "index_tasks_on_team_id_and_completed_at"
     t.index ["team_id", "source", "external_id"], name: "index_tasks_on_team_id_and_source_and_external_id", unique: true, where: "(external_id IS NOT NULL)"
     t.index ["team_id"], name: "index_tasks_on_team_id"
@@ -183,7 +204,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_192738) do
   add_foreign_key "impersonation_events", "users", column: "admin_id"
   add_foreign_key "memberships", "teams"
   add_foreign_key "memberships", "users"
+  add_foreign_key "projects", "teams"
+  add_foreign_key "projects", "users", column: "created_by_id"
   add_foreign_key "subscriptions", "teams"
+  add_foreign_key "tasks", "projects", on_delete: :nullify
   add_foreign_key "tasks", "teams"
   add_foreign_key "tasks", "users", column: "created_by_id"
   add_foreign_key "team_invitations", "teams"

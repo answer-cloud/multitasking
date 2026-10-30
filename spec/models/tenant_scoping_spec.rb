@@ -45,9 +45,7 @@ RSpec.describe "tenant scoping" do
     expect(without_validation).to be_empty
   end
 
-  # Exercised against Subscription rather than the example Project, so these
-  # guarantees survive `bin/remove-example`. The example resource must be
-  # deletable without taking the tenancy tests with it.
+  # Exercised against Subscription, which every app built from this keeps.
   describe "TenantScoped behaviour" do
     it "assigns Current.team on create when no team is given" do
       team = create(:team)

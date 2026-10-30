@@ -5,19 +5,45 @@
 <div class="today"
      data-controller="checklist"
      data-checklist-count-value="<%= @done_today.size %>"
+     data-checklist-faces-value="<%= TasksHelper::INBOX_ZERO_FACES.to_json %>"
      data-action="turbo:before-stream-render@document->checklist#holdStream turbo:submit-end->checklist#settled">
-  <%= page_title "To do", eyebrow: today_label,
-        description: "#{greeting(Current.user)} #{plate_summary(@tasks.size, @done_today.size)}" %>
+  <%= page_title "To do", eyebrow: today_label do %>
+    <p class="today__summary"><%= greeting(Current.user) %> <%= plate_summary(@priorities.size + @tasks.size, @done_today.size) %></p>
+  <% end %>
 
   <%= render "tasks/quick_add", task: @new_task %>
 
-  <section class="today__section" aria-label="To do">
-    <ul class="checklist" id="tasks" data-checklist-target="list">
-      <%= render partial: "tasks/task", collection: @tasks, as: :task %>
+  <%# Hidden until something is in it; the star on any row puts it here. %>
+  <section class="today__section priorities" aria-labelledby="priorities_heading">
+    <div class="today__head">
+      <h2 id="priorities_heading">Priority</h2>
+    </div>
+    <%= render "tasks/columns", labels: %w[Task From Age], starred: true %>
+    <ul class="checklist" id="priorities" data-checklist-target="list" data-controller="sortable">
+      <%= render partial: "tasks/task", collection: @priorities, as: :task, locals: { projects: @projects } %>
     </ul>
+  </section>
+
+  <section class="today__section" aria-label="To do">
+    <%= render "dashboard/view_switch", view: @view %>
+    <%= render "tasks/columns", labels: %w[Task From Age], starred: true %>
+    <% if @view == "projects" %>
+      <%# No dragging here: a place in one project's list is no place in the whole. %>
+      <div class="task-groups" data-checklist-target="list" data-controller="grouped">
+        <ul class="checklist" id="tasks" hidden></ul>
+        <template data-grouped-target="template"><%= render "dashboard/group", project: nil, tasks: [], projects: [] %></template>
+        <% @groups.each do |project, tasks| %>
+          <%= render "dashboard/group", project: project, tasks: tasks, projects: @projects %>
+        <% end %>
+      </div>
+    <% else %>
+      <ul class="checklist" id="tasks" data-checklist-target="list" data-controller="sortable">
+        <%= render partial: "tasks/task", collection: @tasks, as: :task, locals: { projects: @projects } %>
+      </ul>
+    <% end %>
 
     <div class="checklist-empty">
-      <p class="checklist-empty__art" aria-hidden="true">✦ ˚ ✧ ˚ ✦</p>
+      <p class="checklist-empty__art" aria-hidden="true" data-checklist-target="face"><%= inbox_zero_face %></p>
       <p class="checklist-empty__title">Inbox zero.</p>
       <p>Nothing left to tick. Type something above, or go outside.</p>
     </div>
@@ -27,19 +53,18 @@
     <div class="today__head">
       <h2 id="done_today_heading">
         Done today
-        <span class="today__count numeric" id="jar_count" data-checklist-target="count"><%= @done_today.size %></span>
+        <span class="tally numeric" id="jar_count" data-checklist-target="count" data-done-count><%= @done_today.size %></span>
       </h2>
       <button type="button" class="btn-link today__sound"
               data-checklist-target="sound" data-action="checklist#toggleSound"
               aria-pressed="true">Sound on</button>
     </div>
 
-    <ul class="checklist checklist--done" id="done_today">
-      <%= render partial: "tasks/done_task", collection: @done_today, as: :task %>
-    </ul>
+    <%= render "tasks/columns", labels: %w[Task From At] %>
+    <%= render "tasks/done_today", tasks: @done_today %>
     <p class="today__empty">Nothing yet. Tick something and it lands here.</p>
 
-    <p class="today__more"><%= link_to "Everything you’ve finished →", tasks_path %></p>
+    <p class="today__more"><%= link_to "Everything you’ve finished →", tasks_path, class: "btn" %></p>
   </section>
 
   <p class="cheer" data-checklist-target="cheer" role="status" aria-live="polite"></p>

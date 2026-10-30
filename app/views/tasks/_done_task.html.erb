@@ -9,8 +9,10 @@
   <% end %>
 
   <div class="checklist__summary">
+    <%= project_badge(task) %>
     <%= link_to task.title, task, class: "checklist__title" %>
+    <span class="checklist__from"><%= source_badge(task) %></span>
     <%= tag.time(task.completed_at.strftime("%H:%M"), datetime: task.completed_at.iso8601,
-          class: "checklist__time numeric") %>
+          class: "checklist__age numeric") %>
   </div>
 </li>

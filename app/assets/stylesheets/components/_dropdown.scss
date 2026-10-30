@@ -11,6 +11,7 @@
   padding: var(--space-2) 0;
   background-color: var(--paper-raised);
   border: var(--border-strong);
+  border-radius: var(--radius);
   // The one place a shadow is allowed: it separates a floating layer from the
   // page rather than decorating a static box.
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
@@ -34,7 +35,7 @@
   text-decoration: none;
   cursor: pointer;
 
-  &:hover { background-color: var(--paper-sunken); }
+  &:hover { background-color: var(--sun); color: var(--pop-ink); }
   &:focus-visible { @include focus-ring; outline-offset: -2px; }
 
   &[aria-current="true"],

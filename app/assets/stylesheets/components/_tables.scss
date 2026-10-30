@@ -5,7 +5,7 @@
 
 .table {
   width: 100%;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   text-align: left;
 
   th, td {
@@ -45,6 +45,28 @@
   color: var(--ink);
 }
 
+// Finished work, struck through like the done list on the dashboard.
+.table__primary.is-done {
+  color: var(--ink-tertiary);
+  text-decoration: line-through var(--accent);
+}
+
+// Two tables in a row, like a project's open and done work.
+.table-wrap + .table-wrap { margin-top: var(--space-7); }
+
+// A table per day, under the day's name — the done pile.
+.day-group + .day-group { margin-top: var(--space-7); }
+
+.day-group__head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  margin-bottom: var(--space-3);
+  font-size: var(--text-lg);
+
+  a { color: inherit; }
+}
+
 .table__secondary {
   display: block;
   font-size: var(--text-xs);
@@ -69,6 +91,20 @@
     margin: 0;
 
     @include sm { border-top: var(--border); }
+  }
+}
+
+// Label above value at every width, for a narrow rail where the 12rem label
+// column would leave the value no room.
+.detail-list--stacked {
+  @include sm { grid-template-columns: minmax(0, 1fr); }
+
+  dt { padding-bottom: var(--space-1); }
+
+  dd {
+    padding-top: 0;
+
+    @include sm { border-top: 0; }
   }
 }
 

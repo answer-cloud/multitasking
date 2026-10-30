@@ -1,0 +1,8 @@
+<%# Column labels over a checklist, like the head of a catalogue. Visual only: %>
+<%# each row already says what its cells are, so screen readers skip this. %>
+<%# Open rows end in a priority star; `starred` keeps the labels over theirs. %>
+<div class="checklist-columns<%= " checklist-columns--starred" if local_assigns[:starred] %>" aria-hidden="true">
+  <% labels.each do |label| %>
+    <span><%= label %></span>
+  <% end %>
+</div>

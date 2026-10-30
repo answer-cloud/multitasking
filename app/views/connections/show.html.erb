@@ -2,7 +2,7 @@
 <% hook = Rails.root.join("script/agent-hook").to_s %>
 
 <%= page_title "Connect your agents",
-      description: "When Claude Code or Codex finishes a turn or needs you, a task lands in #{current_team.name}’s list. Ping it again and the same task bounces back to the top." %>
+      description: "When Claude Code or Codex finishes a turn or needs you, a task lands in #{current_team.name}’s list, filed under the repository’s project. Ping it again and the same task bounces back to the top." %>
 
 <div class="split">
   <div class="stack--loose stack">
@@ -39,8 +39,14 @@
     </section>
 
     <section class="stack">
+      <h2>4. Browser tabs</h2>
+      <p class="muted">Drag this to your bookmarks bar. Click it on any page and that tab opens here as a task, title and link filled in. Works in any browser, with your sign-in, no token.</p>
+      <p><%= link_to "Save tab", tab_bookmarklet, class: "btn btn--sm", draggable: true %></p>
+    </section>
+
+    <section class="stack">
       <h2>Anything else</h2>
-      <p class="muted">Any tool can post JSON to the inbox. Send the same <code>external_id</code> twice and it updates one task.</p>
+      <p class="muted">Any tool can post JSON to the inbox. Send the same <code>external_id</code> twice and it updates one task. Send a <code>directory</code> and the task is filed under that folder’s <%= link_to "project", projects_path %>.</p>
       <pre>curl -X POST <%= inbox_tasks_url %> \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
