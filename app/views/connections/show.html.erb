@@ -1,5 +1,5 @@
 <% content_for :title, "Connect your agents" %>
-<% hook = Rails.root.join("script/agent-hook").to_s %>
+<% hook = "~/.config/multitasking/agent-hook" %>
 
 <%= page_title "Connect your agents",
       description: "When Claude Code or Codex finishes a turn or needs you, a task lands in #{current_team.name}’s list. Ping it again and the same task bounces back to the top." %>
@@ -7,10 +7,10 @@
 <div class="split">
   <div class="stack--loose stack">
     <section class="stack">
-      <h2>1. Save your token</h2>
-      <p class="muted">Run this once. The hook reads it from this file, so the token never sits in a settings file you might share.</p>
+      <h2>1. Install the hook</h2>
+      <p class="muted">Run this once on each machine you use an agent on. It downloads the hook and saves your token beside it, so the token never sits in a settings file you might share.</p>
       <div data-controller="clipboard">
-        <pre data-clipboard-target="source">mkdir -p ~/.config/multitasking && printf 'url=<%= request.base_url %>\ntoken=<%= current_team.inbox_token %>\n' > ~/.config/multitasking/config && chmod 600 ~/.config/multitasking/config</pre>
+        <pre data-clipboard-target="source">mkdir -p ~/.config/multitasking && curl -fsSL <%= agent_hook_url %> -o <%= hook %> && chmod +x <%= hook %> && printf 'url=<%= request.base_url %>\ntoken=<%= current_team.inbox_token %>\n' > ~/.config/multitasking/config && chmod 600 ~/.config/multitasking/config</pre>
         <button type="button" class="btn btn--sm" data-clipboard-target="button" data-action="clipboard#copy">Copy</button>
       </div>
     </section>
@@ -31,9 +31,9 @@
 
     <section class="stack">
       <h2>3. Codex</h2>
-      <p class="muted">Add this line to <code>~/.codex/config.toml</code>. Codex calls it after every turn.</p>
+      <p class="muted">Add this line to <code>~/.codex/config.toml</code>. Codex calls it after every turn. It goes through <code>sh</code> because Codex does not expand <code>~</code>.</p>
       <div data-controller="clipboard">
-        <pre data-clipboard-target="source">notify = ["<%= hook %>", "codex"]</pre>
+        <pre data-clipboard-target="source">notify = ["sh", "-c", "exec <%= hook %> codex \"$1\"", "sh"]</pre>
         <button type="button" class="btn btn--sm" data-clipboard-target="button" data-action="clipboard#copy">Copy</button>
       </div>
     </section>

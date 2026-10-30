@@ -17,6 +17,7 @@ Rails.application.routes.draw do
     get "pricing", to: "pages#pricing"
     get "terms",   to: "pages#terms"
     get "privacy", to: "pages#privacy"
+    get "agent-hook", to: "hooks#show", as: :agent_hook
   end
 
   # --- Signed-in application ----------------------------------------------

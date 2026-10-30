@@ -13,6 +13,7 @@
 # Reads `url=` and `token=` from ~/.config/multitasking/config, or from
 # MULTITASKING_URL and MULTITASKING_TOKEN.
 #
+# Runs on the Ruby 2.6 that ships with macOS, so it needs nothing installed.
 # Stdlib only, and it always exits 0: a hook that fails or hangs would get in
 # the way of the agent it is meant to be watching.
 
@@ -37,7 +38,9 @@ def shorten(text, length = 90)
   text.length > length ? "#{text[0, length - 1]}…" : text
 end
 
-def project_name(cwd) = cwd.to_s.empty? ? "somewhere" : File.basename(cwd)
+def project_name(cwd)
+  cwd.to_s.empty? ? "somewhere" : File.basename(cwd)
+end
 
 # The first thing you asked for in this session, which is a better task title
 # than a session id. Skips the wrappers Claude Code stores around commands.
@@ -49,7 +52,7 @@ def first_prompt(transcript_path)
     next unless entry["type"] == "user"
 
     content = entry.dig("message", "content")
-    text = content.is_a?(Array) ? content.filter_map { |part| part["text"] if part["type"] == "text" }.join(" ") : content.to_s
+    text = content.is_a?(Array) ? content.select { |part| part["type"] == "text" }.map { |part| part["text"] }.join(" ") : content.to_s
     next if text.strip.empty? || text.lstrip.start_with?("<")
 
     return text

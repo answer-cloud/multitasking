@@ -11,7 +11,16 @@ RSpec.describe "Connections" do
     get connection_path
 
     expect(response.body).to include(tenant.team.inbox_token)
-    expect(response.body).to include("script/agent-hook")
+    expect(response.body).to include(agent_hook_url)
+    expect(response.body).to include("~/.config/multitasking/agent-hook claude")
+    expect(response.body).not_to include(Rails.root.to_s)
+  end
+
+  it "serves the hook script to a signed-out curl" do
+    get agent_hook_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to eq(Rails.root.join("script/agent-hook").binread)
   end
 
   it "does not let a member rotate the token" do
