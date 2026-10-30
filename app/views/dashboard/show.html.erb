@@ -1,62 +1,71 @@
-<% content_for :title, "Inbox" %>
+<% content_for :title, "To do" %>
 
 <%= turbo_stream_from current_team, :tasks %>
 
-<%= page_title greeting(Current.user), description: plate_summary(@tasks.size, @done_today.size) %>
-
-<div class="split inbox"
+<div class="today"
      data-controller="checklist"
      data-checklist-count-value="<%= @done_today.size %>"
+     data-checklist-faces-value="<%= TasksHelper::INBOX_ZERO_FACES.to_json %>"
      data-action="turbo:before-stream-render@document->checklist#holdStream turbo:submit-end->checklist#settled">
-  <div class="stack--loose stack">
-    <div>
-      <%= render "tasks/quick_add", task: @new_task %>
+  <%= page_title "To do", eyebrow: today_label do %>
+    <p class="today__summary"><%= greeting(Current.user) %> <%= plate_summary(@priorities.size + @tasks.size, @done_today.size) %></p>
+  <% end %>
+
+  <%= render "tasks/quick_add", task: @new_task %>
+
+  <%# Hidden until something is in it; the star on any row puts it here. %>
+  <section class="today__section priorities" aria-labelledby="priorities_heading">
+    <div class="today__head">
+      <h2 id="priorities_heading">Priority</h2>
+    </div>
+    <%= render "tasks/columns", labels: %w[Task From Age], starred: true %>
+    <ul class="checklist" id="priorities" data-checklist-target="list" data-controller="sortable">
+      <%= render partial: "tasks/task", collection: @priorities, as: :task, locals: { projects: @projects } %>
+    </ul>
+  </section>
+
+  <section class="today__section" aria-label="To do">
+    <%= render "dashboard/view_switch", view: @view %>
+    <%= render "tasks/columns", labels: %w[Task From Age], starred: true %>
+    <% if @view == "projects" %>
+      <%# No dragging here: a place in one project's list is no place in the whole. %>
+      <div class="task-groups" data-checklist-target="list" data-controller="grouped">
+        <ul class="checklist" id="tasks" hidden></ul>
+        <template data-grouped-target="template"><%= render "dashboard/group", project: nil, tasks: [], projects: [] %></template>
+        <% @groups.each do |project, tasks| %>
+          <%= render "dashboard/group", project: project, tasks: tasks, projects: @projects %>
+        <% end %>
+      </div>
+    <% else %>
+      <ul class="checklist" id="tasks" data-checklist-target="list" data-controller="sortable">
+        <%= render partial: "tasks/task", collection: @tasks, as: :task, locals: { projects: @projects } %>
+      </ul>
+    <% end %>
+
+    <div class="checklist-empty">
+      <p class="checklist-empty__art" aria-hidden="true" data-checklist-target="face"><%= inbox_zero_face %></p>
+      <p class="checklist-empty__title">Inbox zero.</p>
+      <p>Nothing left to tick. Type something above, or go outside.</p>
+    </div>
+  </section>
+
+  <section class="today__section" aria-labelledby="done_today_heading">
+    <div class="today__head">
+      <h2 id="done_today_heading">
+        Done today
+        <span class="tally numeric" id="jar_count" data-checklist-target="count" data-done-count><%= @done_today.size %></span>
+      </h2>
+      <button type="button" class="btn-link today__sound"
+              data-checklist-target="sound" data-action="checklist#toggleSound"
+              aria-pressed="true">Sound on</button>
     </div>
 
-    <div>
-      <ul class="checklist" id="tasks" data-checklist-target="list">
-        <%= render partial: "tasks/task", collection: @tasks, as: :task %>
-      </ul>
+    <%= render "tasks/columns", labels: %w[Task From At] %>
+    <%= render "tasks/done_today", tasks: @done_today %>
+    <p class="today__empty">Nothing yet. Tick something and it lands here.</p>
 
-      <div class="checklist-empty">
-        <p class="checklist-empty__art" aria-hidden="true">✦ ˚ ✧ ˚ ✦</p>
-        <p class="empty__title">Inbox zero.</p>
-        <p>Nothing left to tick. Type something above, or go outside.</p>
-      </div>
-    </div>
-  </div>
-
-  <aside class="stack--loose stack">
-    <section class="panel jar">
-      <div class="panel__header">
-        <h2>The jar</h2>
-        <button type="button" class="btn-link jar__sound"
-                data-checklist-target="sound" data-action="checklist#toggleSound"
-                aria-pressed="true">Sound on</button>
-      </div>
-
-      <div class="stat jar__stat">
-        <span class="stat__value numeric jar__count" id="jar_count"
-              data-checklist-target="count"><%= @done_today.size %></span>
-        <span class="stat__label">Done today</span>
-      </div>
-
-      <ul class="checklist checklist--done" id="done_today">
-        <%= render partial: "tasks/done_task", collection: @done_today, as: :task %>
-      </ul>
-      <p class="jar__empty">Empty for now. Tick something and watch.</p>
-
-      <p class="jar__more"><%= link_to "The whole done pile", tasks_path, class: "btn-link" %></p>
-    </section>
-
-    <section class="panel panel--sunken">
-      <div class="panel__header"><h2>Plug things in</h2></div>
-      <p class="muted">Let Claude Code and Codex drop a task here when they finish or need you.</p>
-      <p style="margin-top: var(--space-4);">
-        <%= link_to "Connect your agents", connection_path, class: "btn btn--sm" %>
-      </p>
-    </section>
-  </aside>
+    <p class="today__more"><%= link_to "Everything you’ve finished →", tasks_path, class: "btn" %></p>
+  </section>
 
   <p class="cheer" data-checklist-target="cheer" role="status" aria-live="polite"></p>
 </div>

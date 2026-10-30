@@ -7,6 +7,7 @@
   padding: var(--space-3) var(--space-4);
   border: var(--border);
   border-left: 3px solid var(--ink);
+  border-radius: var(--radius);
   background-color: var(--paper-raised);
   font-size: var(--text-sm);
 }
@@ -81,13 +82,28 @@
   }
 }
 
-// A status pill. Rectangular, because this design system does not do pills.
+// A count in a bright bubble — today's tally, in the masthead and over the
+// done list. Sized in em so it scales with whatever text it sits in.
+.tally {
+  display: inline-block;
+  min-width: 1.7em;
+  padding: 0.12em 0.5em;
+  background-color: var(--sun);
+  border: 2px solid var(--pop-ink);
+  border-radius: var(--radius-pill);
+  color: var(--pop-ink);
+  line-height: 1.1;
+  text-align: center;
+}
+
+// A status pill.
 .badge {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  padding: 0.15rem var(--space-2);
+  padding: 0.15rem var(--space-3);
   border: var(--border);
+  border-radius: var(--radius-pill);
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
   letter-spacing: var(--tracking-wide);

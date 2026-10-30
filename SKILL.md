@@ -254,10 +254,19 @@ pages/       the few things truly specific to one screen
 - Semantic class names (`.table__primary`, `.btn--ghost`), never utility soup
 - **No Tailwind, ever**
 
-The visual direction is editorial: strong type, generous whitespace, hairline
-rules. **No border radius, no gradients, no decorative shadows.** The single
-exception is the dropdown menu's shadow, which separates a floating layer from
-the page rather than decorating a static box. Do not add more.
+The visual direction is playful but typographic: heavy capitals on cream, big
+type, generous whitespace, hairline rules, and a small bright palette (`--sun`,
+`--sky`, `--pink`, `--leaf`, `--lilac`, and seven more that exist so twelve
+projects can each wear a colour) with ink text on top. Corners are soft
+and come from the radius tokens (`--radius-sm`, `--radius`, `--radius-lg`,
+`--radius-pill`), never a one-off value. Buttons are the loudest thing on a
+page: ink-outlined pills that fill with colour and hop on hover. The app runs
+edge to edge with a gutter that grows with the window; the narrow containers
+are for reading pages and small forms only.
+
+**No gradients, no decorative shadows.** The single shadow exception is the
+dropdown menu's, which separates a floating layer from the page rather than
+decorating a static box. Do not add more.
 
 Dark mode is handled entirely by redefining tokens under
 `prefers-color-scheme: dark`. Components should never need a dark-mode branch.

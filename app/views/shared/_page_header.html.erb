@@ -1,5 +1,8 @@
 <div class="page-header">
   <div class="page-header__text">
+    <% if local_assigns[:eyebrow].present? %>
+      <span class="eyebrow"><%= eyebrow %></span>
+    <% end %>
     <h1><%= title %></h1>
     <% if description.present? %>
       <p class="page-header__description"><%= description %></p>

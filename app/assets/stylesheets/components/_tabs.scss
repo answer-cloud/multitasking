@@ -22,7 +22,8 @@
   &:hover { color: var(--ink); }
   &:focus-visible { @include focus-ring; }
 
-  &[aria-selected="true"] {
+  &[aria-selected="true"],
+  &[aria-current="page"] {
     color: var(--ink);
     font-weight: var(--weight-bold);
     border-bottom-color: var(--ink);

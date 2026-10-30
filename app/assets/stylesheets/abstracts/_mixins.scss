@@ -12,15 +12,16 @@
 
 // Display type.
 //
-// One family now carries both roles, so the difference between a heading and a
-// paragraph is made here: lighter weight, tighter tracking, tighter leading.
-// Lexend Deca is designed for readability and sits fairly wide by default, so
-// large sizes need the negative tracking to stop looking loose.
+// One family carries both roles, so the difference between a heading and a
+// paragraph is made here: heavy capitals, set solid. It is the poster voice of
+// an artist's sheet. A condensed face would do it more faithfully, but the
+// system has one family (SKILL.md §5) — weight and leading do the work instead.
 @mixin display-type {
   font-family: var(--font-display);
   font-weight: var(--weight-display);
-  line-height: var(--leading-tight);
+  line-height: var(--leading-display);
   letter-spacing: var(--tracking-display);
+  text-transform: uppercase;
 }
 
 // Visible focus that does not depend on colour alone.

@@ -16,7 +16,17 @@ RSpec.describe "Task completions" do
 
       expect(task.reload).to be_done
       expect(response.body).to include(%(action="remove" target="task_#{task.id}"))
-      expect(response.body).to include(%(action="prepend" target="done_today"))
+      expect(response.body).to include(%(action="replace" target="done_today"))
+    end
+
+    it "files it in the jar under its project, or Other" do
+      task.update!(project: create(:project, team: tenant.team, name: "Storefront"))
+      create(:task, :done, team: tenant.team, title: "Unfiled")
+
+      post task_completion_path(task), as: :turbo_stream
+
+      projects = Nokogiri::HTML(response.body).css(".checklist__project").map { |headline| headline.text.strip }
+      expect(projects).to contain_exactly("Storefront", "Other")
     end
 
     it "is safe to send twice — the first finish time stands" do
@@ -46,6 +56,7 @@ RSpec.describe "Task completions" do
 
       expect(task.reload).not_to be_done
       expect(response.body).to include(%(action="prepend" target="tasks"))
+      expect(response.body).to include(%(action="replace" target="done_today"))
     end
   end
 

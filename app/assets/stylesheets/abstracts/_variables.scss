@@ -1,43 +1,60 @@
 // ---------------------------------------------------------------------------
 // Design tokens
 //
-// Editorial, typography-led, high contrast. The rules that keep it coherent:
-//   * no border radius
+// Typography-led and playful: heavy capitals on cream, a handful of bright
+// colours, soft corners. The rules that keep it coherent:
+//   * corners come from the radius tokens, never a one-off value
 //   * no gradients
 //   * no shadows used as decoration
-//   * borders are hairlines, and they do the work a shadow would elsewhere
-//   * one accent colour, used sparingly
+//   * borders are hairlines or ink, and they do the work a shadow would
+//   * colour comes from the palette below, and each one has a job
 // ---------------------------------------------------------------------------
 
 :root {
   // --- Colour ------------------------------------------------------------
-  // Ink on paper. Near-black rather than pure black, off-white rather than
-  // pure white — easier on the eye at length, and it reads as printed.
-  --ink:            #111111;
-  --ink-secondary:  #5a5a58;
-  --ink-tertiary:   #8a8a86;
-  --paper:          #fdfdfb;
-  --paper-sunken:   #f4f4f0;
-  --paper-raised:   #ffffff;
+  // Black ink on cream stock, like a printed artist's sheet. Near-black rather
+  // than pure black, and a warm cream rather than white — it reads as paper,
+  // not as a lit screen.
+  --ink:            #121212;
+  --ink-secondary:  #55524a;
+  --ink-tertiary:   #77736a;
+  --paper:          #f7f3e3;
+  --paper-sunken:   #eee9d4;
+  --paper-raised:   #fbf9ef;
 
-  --rule:           #e0e0da;   // hairline borders
-  --rule-strong:    #111111;   // structural borders
+  --rule:           #d6cfb8;   // hairline borders
+  --rule-strong:    #121212;   // structural borders
 
-  --accent:         #8c3b1e;   // a single muted brick red
+  --accent:         #c8381a;   // vermilion: the primary button, the tick, focus
   --accent-ink:     #ffffff;
-  --accent-wash:    #f7ede9;
+  --accent-wash:    #f6e2d3;
+
+  // The palette. Bright, flat colours for chips, ticked boxes and hover
+  // fills. Text on them is always --pop-ink, which stays dark in both modes —
+  // --ink turns light in dark mode and would vanish on a bright fill.
+  --pop-ink:        #121212;
+  --sun:            #ffc533;
+  --sky:            #8cc8ff;
+  --pink:           #ff9ec4;
+  --leaf:           #8fdba4;
+  --lilac:          #c7b3ff;
+  // Seven more, so twelve projects can each wear their own. Same rules: flat,
+  // bright, and --pop-ink on top.
+  --tangerine:      #ff9f45;
+  --coral:          #ff8170;
+  --orchid:         #e39ae8;
+  --cobalt:         #7ea4ff;
+  --teal:           #5fd3c4;
+  --lime:           #cde86b;
+  --sand:           #e8cfa5;
 
   --positive:       #2f5d3a;
-  --positive-wash:  #edf3ee;
+  --positive-wash:  #e8eedd;
   --caution:        #7a5a12;
-  --caution-wash:   #f8f2e2;
+  --caution-wash:   #f3e9cc;
   --critical:       #8f2a2a;
-  --critical-wash:  #f8eaea;
+  --critical-wash:  #f4e0d8;
 
-  // Confetti only. Two brighter colours so a celebration looks like one; they
-  // never appear in the interface itself.
-  --sun:            #e0a100;
-  --sky:            #2f6fb3;
 
   // --- Type ----------------------------------------------------------------
   // Lexend Deca carries both roles — display and text. It is self-hosted, so
@@ -64,21 +81,24 @@
   --weight-bold:    600;
 
   // Fluid modular scale. clamp() means one definition covers every viewport.
-  --text-xs:   0.75rem;
-  --text-sm:   0.8125rem;
-  --text-base: 0.9375rem;
-  --text-md:   1.0625rem;
-  --text-lg:   clamp(1.25rem, 0.5vw + 1.1rem, 1.5rem);
-  --text-xl:   clamp(1.625rem, 1.2vw + 1.3rem, 2.125rem);
-  --text-2xl:  clamp(2.125rem, 2.4vw + 1.5rem, 3.25rem);
-  --text-3xl:  clamp(2.75rem, 4vw + 1.6rem, 4.5rem);
+  --text-xs:   0.8125rem;
+  --text-sm:   0.9375rem;
+  --text-base: 1.0625rem;
+  --text-md:   1.25rem;
+  --text-lg:   clamp(1.4375rem, 0.8vw + 1.2rem, 1.875rem);
+  --text-xl:   clamp(1.875rem, 1.6vw + 1.4rem, 2.75rem);
+  --text-2xl:  clamp(2.5rem, 3.2vw + 1.6rem, 4.25rem);
+  --text-3xl:  clamp(3.5rem, 7vw + 1.5rem, 7.5rem);
 
+  // Display leading is set solid and then some: stacked capitals sit almost
+  // touching, the way a poster sets them.
+  --leading-display: 0.9;
   --leading-tight: 1.15;
   --leading-snug:  1.35;
   --leading-body:  1.6;
   --leading-loose: 1.75;
 
-  --tracking-display: -0.035em;  // large sizes need more negative tracking
+  --tracking-display: -0.02em;   // capitals need less pulling in than lowercase
   --tracking-tight: -0.015em;
   --tracking-normal: 0;
   --tracking-wide:  0.08em;
@@ -105,12 +125,17 @@
   --width-content: 64rem;
   --width-wide:    84rem;
 
-  --gutter: var(--space-5);
+  // The page's side margin. It grows with the window, because the app runs
+  // edge to edge and a fixed gutter looks cramped on a wide screen.
+  --gutter: clamp(1rem, 3.5vw, 3.5rem);
 
   // --- Lines ---------------------------------------------------------------
   --border:        1px solid var(--rule);
   --border-strong: 1px solid var(--rule-strong);
-  --radius:        0;
+  --radius-sm:     0.375rem;   // checkboxes, chips, code
+  --radius:        0.875rem;   // inputs, panels, menus
+  --radius-lg:     1.5rem;     // modals, big empty states
+  --radius-pill:   999px;      // buttons
 
   // --- Motion --------------------------------------------------------------
   --transition: 120ms ease-out;
@@ -121,19 +146,33 @@
 // tokens carry the whole change.
 @media (prefers-color-scheme: dark) {
   :root {
-    --ink:           #f2f1ec;
-    --ink-secondary: #a8a69e;
-    --ink-tertiary:  #77756e;
-    --paper:         #131311;
-    --paper-sunken:  #1b1b18;
-    --paper-raised:  #1e1e1b;
+    --ink:           #f7f3e3;
+    --ink-secondary: #b3ae9f;
+    --ink-tertiary:  #858174;
+    --paper:         #121212;
+    --paper-sunken:  #1b1a17;
+    --paper-raised:  #1f1e1a;
 
-    --rule:          #33322e;
-    --rule-strong:   #f2f1ec;
+    --rule:          #34322c;
+    --rule-strong:   #f7f3e3;
 
-    --accent:        #d97a55;
-    --accent-ink:    #131311;
-    --accent-wash:   #2a1d17;
+    --accent:        #f26b47;
+    --accent-ink:    #121212;
+    --accent-wash:   #2c1a14;
+
+    // Still bright, still under --pop-ink.
+    --sun:           #ffcf52;
+    --sky:           #9dd0ff;
+    --pink:          #ffadcd;
+    --leaf:          #9be3b0;
+    --lilac:         #d0bfff;
+    --tangerine:     #ffab5c;
+    --coral:         #ff9182;
+    --orchid:        #eaabee;
+    --cobalt:        #91b2ff;
+    --teal:          #74dccf;
+    --lime:          #d5ed80;
+    --sand:          #edd8b4;
 
     --positive:      #8fc09c;
     --positive-wash: #1a241c;
@@ -141,8 +180,5 @@
     --caution-wash:  #262015;
     --critical:      #e08c8c;
     --critical-wash: #291a1a;
-
-    --sun:           #f2c94c;
-    --sky:           #7fb2e5;
   }
 }

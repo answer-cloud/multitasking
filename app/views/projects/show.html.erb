@@ -1,0 +1,68 @@
+<% content_for :title, @project.name %>
+
+<%= page_title @project.name, eyebrow: link_to("Projects", projects_path),
+      description: safe_join([ short_directory(@project), "#{@tasks.size} to do", "#{@done.size} done" ], " · ") do %>
+  <% if policy(@project).update? %>
+    <%= link_to "Edit", edit_project_path(@project), class: "btn" %>
+  <% end %>
+  <% if policy(@project).destroy? %>
+    <%= button_to "Delete", @project, method: :delete, class: "btn btn--danger",
+          form: { data: { turbo_confirm: "Delete #{@project.name}? Its tasks stay on the list, unfiled." } } %>
+  <% end %>
+<% end %>
+
+<% if @tasks.any? || @done.any? %>
+  <% if @tasks.any? %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>To do</th>
+            <th>From</th>
+            <th class="is-numeric">Age</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @tasks.each do |task| %>
+            <tr id="<%= dom_id(task) %>">
+              <td><%= link_to task.title, task, class: "table__primary" %></td>
+              <td><%= source_badge(task) %></td>
+              <td class="is-numeric quiet">
+                <%= tag.time(short_age(task.last_activity_at), datetime: task.last_activity_at.iso8601,
+                      title: "Last heard #{time_ago_in_words(task.last_activity_at)} ago") %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+
+  <% if @done.any? %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Done</th>
+            <th>From</th>
+            <th class="is-numeric">When</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @done.each do |task| %>
+            <tr id="<%= dom_id(task, :done) %>">
+              <td><%= link_to task.title, task, class: "table__primary is-done" %></td>
+              <td><%= source_badge(task) %></td>
+              <td class="is-numeric quiet"><%= short_datetime(task.completed_at) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+<% else %>
+  <div class="empty">
+    <p class="empty__title">Nothing here yet</p>
+    <p>Start a task with <%= @project.name %> and it lands here.</p>
+  </div>
+<% end %>

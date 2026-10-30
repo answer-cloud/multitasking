@@ -1,0 +1,12 @@
+<%# The star at the end of a row. A real button in a real form, so it works %>
+<%# without JavaScript: on, the task moves up into the priority list; off, it %>
+<%# goes back on top of the rest. %>
+<%= form_with url: task_priority_path(task), method: task.priority? ? :delete : :post, class: "checklist__star-form" do %>
+  <button type="submit" class="checklist__star" aria-pressed="<%= task.priority? %>"
+          aria-label="Priority: <%= task.title %>"
+          title="<%= task.priority? ? "Not a priority" : "Make a priority" %>">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" />
+    </svg>
+  </button>
+<% end %>

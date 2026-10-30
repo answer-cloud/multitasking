@@ -3,6 +3,7 @@
 class ApplicationController < ActionController::Base
   include Pundit::Authorization
   include SetsCurrentAttributes
+  include SetsTimeZone
   include Impersonation
   include TeamResolution
   include Pagination

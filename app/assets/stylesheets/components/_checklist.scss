@@ -6,6 +6,21 @@
 // colour. The choreography lives in checklist_controller.js; this file is the
 // look of each frame.
 
+// Every row, open or done, and the column labels above them, share one set of
+// tracks, so the columns run straight down the page. The project is not a
+// column: it is a small headline over the title. Below md the side columns
+// fold under the title.
+$columns: minmax(0, 1fr) 7rem 4.5rem;
+$checkbox: 1.75rem;
+// The grip a row is dragged by, left of the checkbox and closer to it than
+// the row's own gap. Done rows have none but keep its room, so every
+// checkbox sits in one column.
+$handle: 1rem;
+$handle-room: calc(#{$handle} + var(--space-2));
+// The priority star that ends an open row. Column labels over open rows keep
+// its room on the right, so Age still lines up with the ages.
+$star: 1.5rem;
+
 .checklist {
   list-style: none;
   padding: 0;
@@ -13,7 +28,35 @@
   border-top: var(--border-strong);
 }
 
+.checklist-columns {
+  display: none;
+
+  @include md {
+    display: grid;
+    grid-template-columns: $columns;
+    column-gap: var(--space-5);
+    padding: 0 0 var(--space-2) calc(#{$handle-room} + #{$checkbox} + var(--space-4));
+  }
+
+  span { @include label; }
+  span:last-child { text-align: right; }
+}
+
+@include md {
+  .checklist-columns--starred { padding-right: calc(#{$star} + var(--space-4)); }
+}
+
+// A row in a catalogue: checkbox, the project over the title, where it came
+// from, how old it is.
+// Hairline between every row, nothing else. Click it and it opens.
 .checklist__item {
+  // The height of a title's first line. The checkbox and the side columns
+  // centre on it, so they sit with the title however many lines it wraps to.
+  --first-line: calc(var(--text-lg) * var(--leading-snug));
+  // The project headline and the gap under it. The handle and the checkbox
+  // drop by this much, so they sit beside the title, not the headline.
+  --headline: calc(var(--text-xs) * var(--leading-snug) + var(--space-1));
+
   display: flex;
   gap: var(--space-4);
   align-items: flex-start;
@@ -32,24 +75,125 @@
 
 .checklist__form { flex: none; }
 
-.checklist__body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+// Left of the checkbox, on the title's first line. Hidden, but holding its
+// room, until sortable_controller.js is there to make it work.
+.checklist__handle {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: $handle;
+  height: var(--first-line);
+  margin-top: var(--headline);
+  margin-right: calc(var(--space-2) - var(--space-4));
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-tertiary);
+  cursor: grab;
+  touch-action: none;
+  visibility: hidden;
+
+  svg { width: 0.625rem; fill: currentColor; }
+
+  &:hover { color: var(--ink); }
+  &:focus-visible { @include focus-ring; color: var(--ink); }
+}
+
+.checklist.is-sortable .checklist__handle { visibility: visible; }
+
+// Lifted: a sunken fill under the row in hand, and nothing else moves but its
+// neighbours.
+.checklist__item.is-dragging {
+  background-color: var(--paper-sunken);
+
+  .checklist__handle { color: var(--accent); cursor: grabbing; }
+}
+
+// A neighbour that moved out of the way. Moving it re-inserts it, and the
+// drop-in must not play twice.
+.checklist__item.is-settled { animation: none; }
+
+.checklist__details { flex: 1; min-width: 0; }
+
+// --- The priority star -------------------------------------------------------
+// Right of the row, on the title's first line. An outline that fills with sun
+// when the task is a priority.
+
+.checklist__star-form { flex: none; }
+
+.checklist__star {
+  display: grid;
+  place-items: center;
+  width: $star;
+  height: var(--first-line);
+  margin-top: var(--headline);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-tertiary);
+  cursor: pointer;
+  transition: color 160ms ease-out, transform 160ms var(--spring);
+
+  svg {
+    width: $star;
+    fill: transparent;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+  }
+
+  &:hover { color: var(--ink); transform: rotate(-8deg) scale(1.12); }
+  &:active { transform: scale(0.88); }
+  &:focus-visible { @include focus-ring; color: var(--ink); }
+
+  &[aria-pressed="true"] {
+    color: var(--ink);
+
+    svg { fill: var(--sun); }
+  }
+}
+
+.checklist__summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: "project project" "title title" "from age";
+  gap: var(--space-1) var(--space-3);
+  align-items: center;
+  flex: 1;
   min-width: 0;
-  padding-top: 0.1rem;
+  list-style: none;
+  cursor: pointer;
+
+  @include md {
+    grid-template-columns: $columns;
+    grid-template-areas: "project . ." "title from age";
+    column-gap: var(--space-5);
+    align-items: start;
+  }
+
+  &::-webkit-details-marker { display: none; }
+  &:focus-visible { @include focus-ring; }
+}
+
+// With no button to say so, the title says the row opens: it underlines in
+// the accent on hover, and stays underlined while open.
+summary.checklist__summary:hover .checklist__title,
+.checklist__details[open] .checklist__title {
+  text-decoration: underline 2px var(--accent);
+  text-underline-offset: 0.22em;
 }
 
 .checklist__title {
+  grid-area: title;
+  justify-self: start;
   position: relative;
-  align-self: flex-start;
-  font-size: var(--text-md);
+  font-size: var(--text-lg);
   font-weight: var(--weight-medium);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-tight);
   color: var(--ink);
   text-decoration: none;
   transition: color 300ms ease-out 200ms;
-
-  &:hover { text-decoration: underline; }
 
   // The strike. Drawn left to right when the box is ticked.
   &::after {
@@ -66,22 +210,80 @@
   }
 }
 
-.checklist__meta {
+// The project, a small capital headline over the title, so a glance down
+// the list reads by project first.
+.checklist__project {
+  @include label;
+  grid-area: project;
+  min-width: 0;
+  line-height: var(--leading-snug);
+  color: var(--ink-secondary);
+}
+
+// The side columns sit on the title's first line, however many it wraps to.
+.checklist__from,
+.checklist__age {
+  display: flex;
+  align-items: center;
+
+  @include md { min-height: var(--first-line); }
+}
+
+.checklist__from { grid-area: from; }
+
+.checklist__age {
+  grid-area: age;
+  font-size: var(--text-sm);
+  color: var(--ink-tertiary);
+
+  @include md { justify-content: flex-end; }
+
+  &.is-quiet {
+    color: var(--caution);
+
+    &::before { content: "zzz"; margin-right: var(--space-1); letter-spacing: var(--tracking-wide); }
+
+    @include playful-motion {
+      &::before { display: inline-block; animation: checklist-snore 2.4s ease-in-out infinite; }
+    }
+  }
+}
+
+.checklist__panel {
+  display: grid;
+  gap: var(--space-4);
+  max-width: var(--measure);
+  padding-block: var(--space-4) var(--space-2);
+  font-size: var(--text-base);
+  color: var(--ink-secondary);
+
+  @include playful-motion { animation: checklist-unfold 260ms ease-out; }
+}
+
+.checklist__facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-1) var(--space-5);
+  margin: 0;
+
+  dt { @include label; line-height: var(--leading-body); }
+  dd { margin: 0; }
+}
+
+// The project picker in an open row: as quiet as the facts around it.
+.checklist__picker {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
   align-items: center;
-  font-size: var(--text-sm);
+
+  .select { width: auto; max-width: 100%; padding-block: var(--space-1); font-size: var(--text-sm); }
 }
 
-.checklist__quiet {
-  color: var(--caution);
-
-  &::before { content: "zzz"; margin-right: var(--space-1); letter-spacing: var(--tracking-wide); }
-
-  @include playful-motion {
-    &::before { display: inline-block; animation: checklist-snore 2.4s ease-in-out infinite; }
-  }
+.checklist__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
 }
 
 .checklist__item.is-checked,
@@ -90,15 +292,25 @@
   .checklist__title::after { transform: scaleX(1) rotate(-1deg); }
 }
 
+// What got finished today. The same columns and headline, quieter: smaller
+// type, struck through, the time it went in, and nothing to open.
 .checklist--done {
-  border-top: 0;
+  .checklist__item {
+    --first-line: calc(var(--text-md) * var(--leading-snug));
 
-  .checklist__item { padding-block: var(--space-2); border-bottom: 0; }
-  // Titles here can wrap, and the drawn strike only crosses one line, so the
-  // jar uses a plain line-through instead.
+    padding-block: var(--space-3);
+    padding-left: $handle-room;
+  }
+
+  .checklist__summary { cursor: auto; }
+
+  // Titles here can wrap, and the drawn strike only crosses one line, so
+  // finished rows use a plain line-through instead.
   .checklist__title {
-    font-size: var(--text-sm);
+    font-size: var(--text-md);
     text-decoration: line-through var(--accent);
+
+    &:hover { color: var(--ink); }
   }
 
   .checklist__title::after { content: none; }
@@ -109,11 +321,13 @@
 .checkbox {
   display: grid;
   place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: $checkbox;
+  height: $checkbox;
   padding: 0;
-  background-color: var(--paper-raised);
+  margin-top: calc(var(--headline, 0px) + (var(--first-line, #{$checkbox}) - #{$checkbox}) / 2);
+  background-color: transparent;
   border: 2px solid var(--ink);
+  border-radius: var(--radius-sm);
   color: var(--ink);
   cursor: pointer;
   transition: background-color 160ms ease-out, transform 160ms var(--spring);
@@ -139,40 +353,52 @@
 }
 
 // A faint preview of the tick, so the box looks like it wants to be ticked.
-.checkbox:hover .checkbox__tick { stroke-dashoffset: 0.7; opacity: 0.35; }
+.checkbox:hover { background-color: var(--leaf); border-color: var(--pop-ink); color: var(--pop-ink); }
+.checkbox:hover .checkbox__tick { stroke-dashoffset: 0.7; opacity: 0.5; }
 
 .is-checked .checkbox,
 .is-done .checkbox {
+  .checkbox__tick { stroke-dashoffset: 0; opacity: 1; }
+}
+
+// The moment of ticking gets a flash of colour. Once it is done, it is just a
+// plain ticked box.
+.is-checked .checkbox {
   background-color: var(--accent);
   border-color: var(--accent);
   color: var(--accent-ink);
 
-  .checkbox__tick { stroke-dashoffset: 0; opacity: 1; }
-}
-
-.is-checked .checkbox {
   @include playful-motion { animation: checklist-squish 420ms var(--spring); }
 }
 
-.checklist--done .checkbox {
-  width: 1.25rem;
-  height: 1.25rem;
-  border-width: 1px;
+// --- Sources -------------------------------------------------------------------
+// Where a task came from, in plain words. No colour: that belongs to the
+// project, and two coloured columns side by side would say neither.
 
-  .checkbox__tick { width: 0.95rem; height: 0.95rem; }
+.source {
+  font-size: var(--text-sm);
+  color: var(--ink-secondary);
+  white-space: nowrap;
 }
 
 // --- Empty states ------------------------------------------------------------
 
 .checklist-empty {
   padding: var(--space-8) var(--space-5);
+  border-bottom: var(--border);
   text-align: center;
   color: var(--ink-secondary);
 }
 
+.checklist-empty__title {
+  @include display-type;
+  margin-block: var(--space-3) var(--space-2);
+  font-size: var(--text-xl);
+  color: var(--ink);
+}
+
 .checklist-empty__art {
   font-size: var(--text-xl);
-  letter-spacing: var(--tracking-wide);
   color: var(--accent);
 
   @include playful-motion { animation: checklist-twinkle 3s ease-in-out infinite; }
@@ -181,25 +407,60 @@
 .checklist:has(.checklist__item) + .checklist-empty { display: none; }
 
 // --- Quick add -----------------------------------------------------------------
+// One big friendly field, the first thing on the page.
 
+.quick-add { margin-bottom: var(--space-7); }
+
+// On a phone the field takes the whole first line and the buttons drop
+// under it, rather than squeezing it to a few letters. Field and buttons share
+// one height, so the row reads as a single control and the mic stays round.
 .quick-add__row {
+  --field: calc(var(--text-lg) + var(--space-6));
+
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-2);
+  align-items: center;
+  justify-content: flex-end;
 }
 
 // Only offered once quick_add_controller.js has found speech recognition.
 .quick-add:not(.has-voice) .quick-add__voice-hint { display: none; }
 
+// A phone has no keyboard to press them on. "Added." still shows.
+.quick-add__keys {
+  @include below-md { display: none; }
+}
+
 .quick-add__input {
-  flex: 1;
-  padding-block: var(--space-3);
-  font-size: var(--text-md);
-  border: var(--border-strong);
+  flex: 1 1 100%;
+  min-width: 0;
+  height: var(--field);
+  padding: 0 var(--space-5);
+  background-color: var(--paper-raised);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-tight);
+
+  &:hover { border-color: var(--ink); }
+  &:focus { border-color: var(--accent); box-shadow: none; }
+
+  @include sm { flex: 1; }
+}
+
+.quick-add__row .btn { height: var(--field); }
+
+.quick-add__row .btn--primary {
+  padding-inline: var(--space-6);
+  font-size: var(--text-base);
 }
 
 .quick-add__mic {
   flex: none;
-  padding-inline: var(--space-3);
+  width: var(--field);
+  padding: 0;
 
   svg {
     width: 1.25rem;
@@ -221,30 +482,9 @@
 
 .quick-add__hint {
   margin-top: var(--space-2);
+  padding-inline: var(--space-5);
   font-size: var(--text-sm);
   color: var(--ink-tertiary);
-}
-
-// --- The jar ---------------------------------------------------------------------
-
-.jar__stat { margin-bottom: var(--space-4); }
-
-.jar__count { display: inline-block; color: var(--accent); }
-
-.jar__sound { font-size: var(--text-sm); }
-
-.jar__empty {
-  font-size: var(--text-sm);
-  color: var(--ink-tertiary);
-}
-
-.checklist--done:has(.checklist__item) + .jar__empty { display: none; }
-
-.jar__more {
-  margin-top: var(--space-4);
-  padding-top: var(--space-3);
-  border-top: var(--border);
-  font-size: var(--text-sm);
 }
 
 // --- The cheer -------------------------------------------------------------------
@@ -257,8 +497,10 @@
   z-index: 60;
   max-width: calc(100vw - var(--space-6));
   padding: var(--space-3) var(--space-5);
-  background-color: var(--ink);
-  color: var(--paper);
+  background-color: var(--sun);
+  border: 2px solid var(--pop-ink);
+  border-radius: var(--radius-pill);
+  color: var(--pop-ink);
   font-family: var(--font-display);
   font-size: var(--text-md);
   font-weight: var(--weight-bold);
@@ -293,8 +535,20 @@
   will-change: transform, opacity;
 }
 
-.confetti__piece--square { width: 0.5rem; height: 0.5rem; background-color: currentColor; }
-.confetti__piece--strip  { width: 0.25rem; height: 0.8rem; background-color: currentColor; }
+.confetti__piece--square {
+  width: 0.5rem;
+  height: 0.5rem;
+  background-color: currentColor;
+  border-radius: var(--radius-sm);
+}
+
+.confetti__piece--strip {
+  width: 0.25rem;
+  height: 0.8rem;
+  background-color: currentColor;
+  border-radius: var(--radius-pill);
+}
+
 .confetti__piece--star   { font-size: var(--text-md); }
 
 .confetti__piece--accent   { color: var(--accent); }
@@ -302,11 +556,19 @@
 .confetti__piece--caution  { color: var(--caution); }
 .confetti__piece--sun      { color: var(--sun); }
 .confetti__piece--sky      { color: var(--sky); }
+.confetti__piece--pink     { color: var(--pink); }
+.confetti__piece--leaf     { color: var(--leaf); }
+.confetti__piece--lilac    { color: var(--lilac); }
 
 // --- Keyframes ---------------------------------------------------------------------
 
 @keyframes checklist-drop-in {
   from { opacity: 0; transform: translateY(-0.75rem) rotate(-1deg); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes checklist-unfold {
+  from { opacity: 0; transform: translateY(-0.5rem); }
   to   { opacity: 1; transform: none; }
 }
 

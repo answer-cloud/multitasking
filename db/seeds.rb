@@ -49,16 +49,21 @@ alice.update_column(:last_team_id, northwind.id)
 bob.update_column(:last_team_id, contoso.id)
 carol.update_column(:last_team_id, northwind.id)
 
+# --- Projects ----------------------------------------------------------------
+# One with a folder, as an agent would have made it, and one made by hand.
+storefront = northwind.projects.find_or_create_by!(name: "storefront") { |project| project.directory = "/Users/alice/code/storefront" }
+q3_planning = northwind.projects.find_or_create_by!(name: "Q3 planning")
+
 # --- Tasks -------------------------------------------------------------------
 # A mix of sources, one task gone quiet and one already in the jar, so the
 # dashboard shows every state on first sign-in. Keyed on title so re-running
 # the seeds does not duplicate them.
 {
   northwind => [
-    { title: "Review Claude: refactor the billing webhook", source: "claude", notes: "Project: ~/Rails/northwind" },
-    { title: "Reply to Sam about the Q3 deck", source: "slack", url: "https://slack.com/" },
+    { title: "Review Claude: refactor the billing webhook", source: "claude", notes: "Project: /Users/alice/code/storefront", project: storefront },
+    { title: "Reply to Sam about the Q3 deck", source: "slack", url: "https://slack.com/", project: q3_planning },
     { title: "Finish the supplier portal tab I left open", source: "chrome", url: "https://example.com/portal" },
-    { title: "Review Codex: add pagination to the API", source: "codex", quiet: true },
+    { title: "Review Codex: add pagination to the API", source: "codex", quiet: true, project: storefront },
     { title: "Book the dentist, for real this time", source: "voice" },
     { title: "Send the invoice to Contoso", source: "typed", done: true }
   ],
@@ -72,6 +77,7 @@ carol.update_column(:last_team_id, northwind.id)
       task.source = attributes[:source]
       task.notes = attributes[:notes]
       task.url = attributes[:url]
+      task.project = attributes[:project]
       task.created_by = team.owners.first
       task.last_activity_at = attributes[:quiet] ? 4.days.ago : Time.current
       task.completed_at = Time.current if attributes[:done]
