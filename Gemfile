@@ -43,7 +43,9 @@ gem "omniauth-rails_csrf_protection", "~> 1.0"
 # Background work
 # ---------------------------------------------------------------------------
 gem "sidekiq", "~> 8.0"
-gem "redis", ">= 5.0"
+# Action Cable's Redis adapter (Rails 8.1) refuses redis 6. It fails on the
+# first broadcast, in production only: dev and test use other adapters.
+gem "redis", ">= 5.0", "< 6"
 
 # ---------------------------------------------------------------------------
 # Billing
