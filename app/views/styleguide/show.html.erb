@@ -867,6 +867,87 @@
       </p>
     </div>
   </div>
+
+  <div class="sg-spec">
+    <div>
+      <div class="day-summary">
+        <p class="day-summary__label">The day, in brief</p>
+        <p class="day-summary__body">A Storefront day: the invoice went out and the checkout copy got its last pass. The dentist is finally booked.</p>
+      </div>
+    </div>
+    <div>
+      <span class="sg-spec__class">.day-summary</span>
+      <p class="sg-spec__note">
+        Claude’s note on a day, written at 9pm in the team’s zone. Over the
+        dashboard’s done list and under each day on the done pile. A caption,
+        so it stays quiet: a lilac rule, secondary ink.
+      </p>
+    </div>
+  </div>
+
+  <div class="sg-spec">
+    <div>
+      <figure class="month-chart">
+        <figcaption class="month-chart__head">
+          <h2>November</h2>
+          <dl class="month-chart__stats">
+            <div><dt>Done</dt><dd class="numeric">9</dd></div>
+            <div><dt>Month best</dt><dd class="numeric">4</dd></div>
+            <div><dt>All-time best</dt><dd class="numeric">5</dd></div>
+          </dl>
+        </figcaption>
+        <div class="month-chart__plot" style="--top: 5; --days: 7">
+          <div class="month-chart__line month-chart__line--ever" style="--at: 5" aria-hidden="true">
+            <span class="month-chart__line-label">All-time best · 5</span>
+          </div>
+          <div class="month-chart__line" style="--at: 4" aria-hidden="true">
+            <span class="month-chart__line-label">Month best · 4</span>
+          </div>
+          <ol class="month-chart__days">
+            <li class="month-chart__day">
+              <a class="month-chart__bar" href="#lists" style="--count: 2">
+                <span class="month-chart__block month-chart__block--sky"></span>
+                <span class="month-chart__block month-chart__block--other"></span>
+              </a>
+              <span class="month-chart__date numeric">1</span>
+            </li>
+            <li class="month-chart__day"><span class="month-chart__date numeric">2</span></li>
+            <li class="month-chart__day">
+              <a class="month-chart__bar" href="#lists" style="--count: 4">
+                <span class="month-chart__block month-chart__block--sky"></span>
+                <span class="month-chart__block month-chart__block--sky"></span>
+                <span class="month-chart__block month-chart__block--pink"></span>
+                <span class="month-chart__block month-chart__block--leaf"></span>
+              </a>
+              <span class="month-chart__date numeric">3</span>
+            </li>
+            <li class="month-chart__day is-today">
+              <a class="month-chart__bar" href="#lists" style="--count: 3">
+                <span class="month-chart__block month-chart__block--pink"></span>
+                <span class="month-chart__block month-chart__block--sun"></span>
+                <span class="month-chart__block month-chart__block--sun"></span>
+              </a>
+              <span class="month-chart__date numeric">4</span>
+            </li>
+            <li class="month-chart__day"><span class="month-chart__date numeric">5</span></li>
+            <li class="month-chart__day"><span class="month-chart__date numeric">6</span></li>
+            <li class="month-chart__day"><span class="month-chart__date numeric">7</span></li>
+          </ol>
+        </div>
+      </figure>
+    </div>
+    <div>
+      <span class="sg-spec__class">.month-chart<br>.month-chart__block--{colour}<br>.month-chart__line--ever</span>
+      <p class="sg-spec__note">
+        The month on the done pile. A bar a day, a block a task in its
+        project’s colour, first finished at the bottom. The scale tops out at
+        the best day ever, marked in the accent; the month’s best is the
+        dashed ink line. The markup sets <code>--top</code>,
+        <code>--count</code> and <code>--at</code>; the heights are worked
+        out in the stylesheet. A bar opens its day.
+      </p>
+    </div>
+  </div>
 </section>
 
 <%# ============================ SURFACES ============================== %>

@@ -62,6 +62,7 @@
               aria-pressed="true">Sound on</button>
     </div>
 
+    <%= render "tasks/summary", summary: @summary %>
     <%= render "tasks/columns", labels: %w[Task From At] %>
     <%= render "tasks/done_today", tasks: @done_today %>
     <p class="today__empty">Nothing yet. Tick something and it lands here.</p>

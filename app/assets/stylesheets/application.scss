@@ -28,6 +28,8 @@
 @use "components/editor";
 @use "components/checklist";
 @use "components/project_tag";
+@use "components/day_summary";
+@use "components/month_chart";
 
 @use "pages/today";
 @use "pages/auth";

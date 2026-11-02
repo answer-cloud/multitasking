@@ -8,6 +8,7 @@
 #  inbox_token        :string           not null
 #  name               :string           not null
 #  slug               :string           not null
+#  time_zone          :string           default("UTC"), not null
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
 #  stripe_customer_id :string
@@ -24,6 +25,7 @@ class Team < ApplicationRecord
   has_many :invitations, class_name: "TeamInvitation", dependent: :destroy
   has_many :tasks, dependent: :destroy
   has_many :projects, dependent: :destroy
+  has_many :daily_summaries, dependent: :destroy
   has_one :subscription, dependent: :destroy
 
   validates :name, presence: true, length: { maximum: 120 }
@@ -34,11 +36,23 @@ class Team < ApplicationRecord
                      with: /\A[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\z/,
                      message: "may only contain lowercase letters, numbers and hyphens"
                    }
+  validate :time_zone_exists
 
   # The secret in the address a hook posts tasks to. See Inbox::TasksController.
   has_secure_token :inbox_token
 
   before_validation :generate_slug, on: :create
+
+  # A browser reports "America/Los_Angeles"; the settings form lists "Pacific
+  # Time (US & Canada)". Stored as the form's name where Rails has one, so the
+  # picker shows the saved zone rather than quietly resetting it on save. A
+  # form name is kept as picked: Tokyo, Osaka and Sapporo are one zone.
+  normalizes :time_zone, with: ->(name) {
+    zone = ActiveSupport::TimeZone[name.to_s]
+    next name if zone.nil? || ActiveSupport::TimeZone::MAPPING.key?(name)
+
+    ActiveSupport::TimeZone::MAPPING.key(zone.tzinfo.identifier) || zone.name
+  }
 
   scope :search, ->(term) {
     next all if term.blank?
@@ -59,7 +73,15 @@ class Team < ApplicationRecord
 
   def to_param = slug
 
+  # Where the team's day starts and ends, for the jobs that run without a
+  # browser to ask. A request uses the browser's zone instead; see SetsTimeZone.
+  def zone = ActiveSupport::TimeZone[time_zone]
+
   private
+
+  def time_zone_exists
+    errors.add(:time_zone, "is not a time zone we know") if ActiveSupport::TimeZone[time_zone.to_s].nil?
+  end
 
   def generate_slug
     return if slug.present?

@@ -23,6 +23,14 @@ RSpec.describe "Teams" do
         .to have_enqueued_job(Billing::CreateCustomerJob)
     end
 
+    it "starts the team in the founder's browser time zone, so the summary lands in their evening" do
+      cookies[:time_zone] = "America/Los_Angeles"
+
+      post teams_path, params: { team: { name: "West Coast" } }
+
+      expect(Team.find_by(name: "West Coast").time_zone).to eq("Pacific Time (US & Canada)")
+    end
+
     it "re-renders with errors for a blank name" do
       post teams_path, params: { team: { name: "" } }
 
@@ -69,6 +77,17 @@ RSpec.describe "Teams" do
       patch team_path(tenant.team), params: { team: { name: "Renamed Co" } }
 
       expect(tenant.team.reload.name).to eq("Renamed Co")
+    end
+
+    it "lets an owner change the team's time zone, and refuses one that does not exist" do
+      sign_in tenant.owner
+
+      patch team_path(tenant.team), params: { team: { time_zone: "Tokyo" } }
+      expect(tenant.team.reload.time_zone).to eq("Tokyo")
+
+      patch team_path(tenant.team), params: { team: { time_zone: "Mars/Olympus_Mons" } }
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(tenant.team.reload.time_zone).to eq("Tokyo")
     end
 
     it "does not let a member rename the team" do

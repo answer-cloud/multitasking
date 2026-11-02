@@ -10,6 +10,7 @@ require "rails_helper"
 #  inbox_token        :string           not null
 #  name               :string           not null
 #  slug               :string           not null
+#  time_zone          :string           default("UTC"), not null
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
 #  stripe_customer_id :string
@@ -84,6 +85,24 @@ RSpec.describe Team do
       team = create(:team)
       create_list(:membership, 3, team: team)
       expect(team.seat_count).to eq(3)
+    end
+  end
+
+  describe "time zone" do
+    it "starts in UTC" do
+      expect(create(:team).zone).to eq(ActiveSupport::TimeZone["UTC"])
+    end
+
+    it "stores a browser's zone under the name the settings form lists, so saving the form keeps it" do
+      expect(build(:team, time_zone: "America/Los_Angeles").time_zone).to eq("Pacific Time (US & Canada)")
+    end
+
+    it "keeps a real zone Rails has no friendly name for" do
+      expect(build(:team, time_zone: "America/Boise")).to be_valid
+    end
+
+    it "refuses a zone that does not exist" do
+      expect(build(:team, time_zone: "Mars/Olympus_Mons")).not_to be_valid
     end
   end
 end

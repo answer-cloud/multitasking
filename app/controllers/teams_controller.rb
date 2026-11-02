@@ -15,7 +15,7 @@ class TeamsController < ApplicationController
   def create
     authorize Team
 
-    result = Teams::Create.call(name: team_params[:name], owner: Current.user)
+    result = Teams::Create.call(name: team_params[:name], owner: Current.user, time_zone: Time.zone.name)
 
     if result.success?
       switch_to_team(result.value)
@@ -63,6 +63,6 @@ class TeamsController < ApplicationController
   end
 
   def team_params
-    params.expect(team: %i[name slug])
+    params.expect(team: %i[name slug time_zone])
   end
 end

@@ -66,6 +66,9 @@ module TasksHelper
     options_for_select([ [ "Every day", "" ], *options ], selected&.iso8601)
   end
 
+  # A day's bar on the month chart, as a screen reader hears it.
+  def chart_day_label(date, count) = "#{date.strftime("%A %-d %B")}: #{pluralize(count, "task")} done"
+
   # The dashboard list a task still to do belongs in. Every stream that puts a
   # row back asks this, so a priority task never lands in the rest.
   def task_list_id(task) = task.priority? ? "priorities" : "tasks"

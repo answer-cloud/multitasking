@@ -291,9 +291,11 @@ RSpec.describe "Tasks" do
       it "shows only the day you pick" do
         get tasks_path, params: { day: "2026-10-28" }
 
-        expect(response.body).to include("Done yesterday")
-        expect(response.body).not_to include("Done this morning")
-        expect(response.body).not_to include("Done last week")
+        # The pile only: the month chart above it shows the whole month.
+        pile = Nokogiri::HTML(response.body).css(".day-group").text
+        expect(pile).to include("Done yesterday")
+        expect(pile).not_to include("Done this morning")
+        expect(pile).not_to include("Done last week")
       end
 
       it "offers every day with something finished in the picker, with its count" do
@@ -322,6 +324,85 @@ RSpec.describe "Tasks" do
         get tasks_path
 
         expect(Nokogiri::HTML(response.body).css("select#day option").map(&:text)).to include("Yesterday · 1")
+      end
+    end
+
+    describe "the month chart" do
+      let(:tenant) { create_tenant }
+      let(:storefront) { create(:project, team: tenant.team, name: "Storefront", color: "sky") }
+
+      around { |example| travel_to(Time.utc(2026, 11, 20, 12, 0)) { example.run } }
+
+      before do
+        sign_in tenant.owner
+        create(:task, :done, team: tenant.team, project: storefront, title: "Ship it", completed_at: Time.utc(2026, 11, 3, 9))
+        create(:task, :done, team: tenant.team, title: "Book the dentist", completed_at: Time.utc(2026, 11, 3, 10))
+        create(:task, :done, team: tenant.team, completed_at: Time.utc(2026, 11, 18, 10))
+        # A better day, but last month: it sets the all-time best only.
+        3.times { create(:task, :done, team: tenant.team, completed_at: Time.utc(2026, 10, 9, 10)) }
+      end
+
+      def chart = Nokogiri::HTML(response.body).at_css(".month-chart")
+
+      it "has a bar for every day of the month, and a block in its project's colour for every task" do
+        get tasks_path
+
+        expect(chart.css(".month-chart__day").size).to eq(30)
+        blocks = chart.css("a[href='#{tasks_path(day: "2026-11-03")}'] .month-chart__block")
+        expect(blocks.map { |block| block["class"] }).to eq([
+          "month-chart__block month-chart__block--sky",
+          "month-chart__block month-chart__block--other"
+        ])
+        expect(blocks.first["title"]).to eq("Ship it")
+      end
+
+      it "shows the month's best day and the best day ever, each as a line" do
+        get tasks_path
+
+        expect(chart.css(".month-chart__stats dd").map(&:text)).to eq(%w[3 2 3])
+        expect(chart.css(".month-chart__line-label").map(&:text)).to eq([ "All-time best · 3", "Month best · 2" ])
+      end
+
+      it "draws one line when this month holds the record" do
+        create(:task, :done, team: tenant.team, completed_at: Time.utc(2026, 11, 3, 11))
+        create(:task, :done, team: tenant.team, completed_at: Time.utc(2026, 11, 3, 12))
+
+        get tasks_path
+
+        expect(chart.css(".month-chart__line-label").map(&:text)).to eq([ "Month and all-time best · 4" ])
+      end
+
+      it "charts the whole month whatever the search, and never another team's work" do
+        5.times { create(:task, :done, team: create_tenant.team, completed_at: Time.utc(2026, 11, 3, 9)) }
+
+        get tasks_path, params: { q: "dentist" }
+
+        expect(chart.css(".month-chart__stats dd").map(&:text)).to eq(%w[3 2 3])
+      end
+    end
+
+    describe "the day's summary" do
+      let(:tenant) { create_tenant }
+
+      before { sign_in tenant.owner }
+
+      it "shows a day's summary under the day it belongs to" do
+        create(:task, :done, team: tenant.team, completed_at: 1.day.ago)
+        create(:daily_summary, team: tenant.team, day: 1.day.ago.to_date, body: "Yesterday was all invoices.")
+
+        get tasks_path
+
+        group = Nokogiri::HTML(response.body).at_css("#day_#{1.day.ago.to_date.iso8601}").parent
+        expect(group.at_css(".day-summary__body").text).to eq("Yesterday was all invoices.")
+      end
+
+      it "never shows another team's summary" do
+        create(:task, :done, team: tenant.team)
+        create(:daily_summary, team: create_tenant.team, body: "Their secret day.")
+
+        get tasks_path
+
+        expect(response.body).not_to include("Their secret day.")
       end
     end
   end

@@ -53,6 +53,13 @@ gem "redis", ">= 5.0", "< 6"
 gem "stripe", "~> 19.0"
 
 # ---------------------------------------------------------------------------
+# AI — the evening summary of each team's day. Anthropic's own SDK rather than
+# a hand-rolled HTTP call: it owns retries, timeouts and typed errors, which
+# are exactly the parts that go subtly wrong by hand.
+# ---------------------------------------------------------------------------
+gem "anthropic", "~> 2.4"
+
+# ---------------------------------------------------------------------------
 # AWS — SES for mail, S3 for Active Storage.
 # Credentials come from the EC2 instance IAM role, never from static keys.
 # ---------------------------------------------------------------------------

@@ -24,6 +24,11 @@ namespace :credentials do
     google:
       client_id:
       client_secret:
+
+    # Optional. The evening summary of each team's day — a key from
+    # console.anthropic.com. Blank means no summaries are written.
+    anthropic:
+      api_key:
   YAML
 
   desc "Create config/credentials/development.yml.enc if it does not exist yet"
