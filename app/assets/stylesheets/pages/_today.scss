@@ -76,8 +76,31 @@
 .task-group:not(:has(.checklist__item)) { display: none; }
 
 .task-group__head {
+  display: flex;
+  gap: var(--space-4);
+  align-items: baseline;
+  justify-content: space-between;
   margin-bottom: var(--space-3);
-  font-size: var(--text-lg);
+
+  h3 { min-width: 0; font-size: var(--text-lg); }
+}
+
+// The projects you hid, under the switch, each with its way back.
+.hidden-projects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  align-items: baseline;
+  margin-bottom: var(--space-5);
+  font-size: var(--text-sm);
+}
+
+.hidden-projects__label { @include label; }
+
+.hidden-projects__item {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: baseline;
 }
 
 .task-groups {

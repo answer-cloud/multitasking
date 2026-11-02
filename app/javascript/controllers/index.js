@@ -10,6 +10,7 @@ import ChecklistController from "./checklist_controller"
 import ConfirmController from "./confirm_controller"
 import FlashController from "./flash_controller"
 import GroupedController from "./grouped_controller"
+import HiddenProjectsController from "./hidden_projects_controller"
 import ModalController from "./modal_controller"
 import QuickAddController from "./quick_add_controller"
 import RichTextEditorController from "./rich_text_editor_controller"
@@ -28,6 +29,7 @@ application.register("checklist", ChecklistController)
 application.register("confirm", ConfirmController)
 application.register("flash", FlashController)
 application.register("grouped", GroupedController)
+application.register("hidden-projects", HiddenProjectsController)
 application.register("modal", ModalController)
 application.register("quick-add", QuickAddController)
 application.register("rich-text-editor", RichTextEditorController)

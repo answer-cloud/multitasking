@@ -106,6 +106,13 @@ class Task < ApplicationRecord
 
     where(completed_at: day.in_time_zone.all_day)
   }
+  # Everything not filed under these projects. Unfiled tasks count as outside:
+  # NOT IN on its own would drop them too, because NULL is never NOT IN.
+  scope :outside, ->(project_ids) {
+    next all if project_ids.blank?
+
+    where("tasks.project_id IS NULL OR tasks.project_id NOT IN (?)", project_ids)
+  }
   scope :search, ->(term) {
     next all if term.blank?
 

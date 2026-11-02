@@ -36,7 +36,10 @@ Rails.application.routes.draw do
     resource :handoff, only: :create, module: :tasks
   end
 
-  resources :projects
+  resources :projects do
+    # Keeping it off your dashboard, and letting it back on.
+    resource :hiding, only: %i[create destroy], module: :projects
+  end
 
   # The page that sets up the hooks, and rotates the inbox token they use.
   resource :connection, only: %i[show update]

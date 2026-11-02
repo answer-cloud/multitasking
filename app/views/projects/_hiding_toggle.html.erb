@@ -1,0 +1,5 @@
+<%# Takes a project off your own dashboard, or puts it back. A real button in %>
+<%# a real form, so it works without JavaScript. %>
+<%= button_to hidden ? "Show" : "Hide", project_hiding_path(project),
+      method: hidden ? :delete : :post, class: "btn-link", form_class: "hiding-toggle",
+      aria: { label: "#{hidden ? "Show" : "Hide"} #{project.name} on your list" } %>

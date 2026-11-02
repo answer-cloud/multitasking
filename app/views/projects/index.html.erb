@@ -25,6 +25,9 @@
             </td>
             <td class="is-numeric"><%= @open_counts.fetch(project.id, 0) %></td>
             <td class="is-actions">
+              <% if policy(project).hide? %>
+                <%= render "projects/hiding_toggle", project: project, hidden: current_membership.hidden?(project) %>
+              <% end %>
               <% if policy(project).update? %>
                 <%= link_to "Edit", edit_project_path(project), class: "btn-link" %>
               <% end %>

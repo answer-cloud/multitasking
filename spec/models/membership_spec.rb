@@ -6,12 +6,13 @@ require "rails_helper"
 #
 # Table name: memberships
 #
-#  id         :bigint           not null, primary key
-#  role       :integer          default(0), not null
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
-#  team_id    :bigint           not null
-#  user_id    :bigint           not null
+#  id                 :bigint           not null, primary key
+#  hidden_project_ids :bigint           default([]), not null, is an Array
+#  role               :integer          default(0), not null
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#  team_id            :bigint           not null
+#  user_id            :bigint           not null
 #
 # Indexes
 #

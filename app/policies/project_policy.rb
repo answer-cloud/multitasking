@@ -10,6 +10,9 @@ class ProjectPolicy < ApplicationPolicy
   def update?  = member?
   def destroy? = member?
 
+  # Hiding only changes your own dashboard, so it needs no more than seeing.
+  def hide? = show?
+
   class Scope < ApplicationPolicy::Scope
     def resolve
       return scope.none if membership.nil?

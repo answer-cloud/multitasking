@@ -141,14 +141,14 @@ RSpec.describe "Policies" do
   describe ProjectPolicy do
     let(:project) { create(:project, team: team) }
 
-    it "lets any member make, rename and delete a project" do
-      %i[show? create? update? destroy?].each do |question|
+    it "lets any member make, rename, hide and delete a project" do
+      %i[show? create? update? destroy? hide?].each do |question|
         expect(as(member, project, question)).to be(true)
       end
     end
 
     it "refuses everything to a non-member" do
-      %i[show? create? update? destroy?].each do |question|
+      %i[show? create? update? destroy? hide?].each do |question|
         expect(as(outsider, project, question)).to be(false)
       end
     end

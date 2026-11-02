@@ -3,7 +3,8 @@
 <%= turbo_stream_from current_team, :tasks %>
 
 <div class="today"
-     data-controller="checklist"
+     data-controller="checklist hidden-projects"
+     data-hidden-projects-ids-value="<%= current_membership.hidden_project_ids.to_json %>"
      data-checklist-count-value="<%= @done_today.size %>"
      data-checklist-faces-value="<%= TasksHelper::INBOX_ZERO_FACES.to_json %>"
      data-action="turbo:before-stream-render@document->checklist#holdStream turbo:submit-end->checklist#settled">
@@ -26,6 +27,7 @@
 
   <section class="today__section" aria-label="To do">
     <%= render "dashboard/view_switch", view: @view %>
+    <%= render "dashboard/hidden", projects: @projects.select { |project| current_membership.hidden?(project) } %>
     <%= render "tasks/columns", labels: %w[Task From Age], starred: true %>
     <% if @view == "projects" %>
       <%# No dragging here: a place in one project's list is no place in the whole. %>

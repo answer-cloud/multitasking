@@ -6,12 +6,13 @@
 #
 # Table name: memberships
 #
-#  id         :bigint           not null, primary key
-#  role       :integer          default(0), not null
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
-#  team_id    :bigint           not null
-#  user_id    :bigint           not null
+#  id                 :bigint           not null, primary key
+#  hidden_project_ids :bigint           default([]), not null, is an Array
+#  role               :integer          default(0), not null
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#  team_id            :bigint           not null
+#  user_id            :bigint           not null
 #
 # Indexes
 #
@@ -55,6 +56,13 @@ class Membership < ApplicationRecord
   end
 
   def admin_or_above? = at_least?(:admin)
+
+  # Projects kept off this person's dashboard. Theirs alone: the team's list
+  # is shared, so one person tidying their view must not empty someone else's.
+  # Both set absolute state, so a double-click lands in the same place.
+  def hidden?(project) = hidden_project_ids.include?(project.id)
+  def hide!(project) = update!(hidden_project_ids: hidden_project_ids | [ project.id ])
+  def unhide!(project) = update!(hidden_project_ids: hidden_project_ids - [ project.id ])
 
   def last_owner?
     owner? && team.memberships.owner.where.not(id: id).none?

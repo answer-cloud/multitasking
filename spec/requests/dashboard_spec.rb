@@ -80,7 +80,7 @@ RSpec.describe "Dashboard" do
 
     page = Nokogiri::HTML(response.body)
     groups = page.css(".task-groups > .task-group")
-    expect(groups.map { |group| group.at_css(".task-group__head").text.strip }).to eq(%w[api Zoo Other])
+    expect(groups.map { |group| group.at_css(".task-group__head h3").text.strip }).to eq(%w[api Zoo Other])
     expect(groups.map { |group| group["data-project-id"] }).to eq([ api.id.to_s, zoo.id.to_s, "" ])
     expect(groups.first.css(".checklist__title").map(&:text)).to eq([ "Write the docs", "Ship the endpoint" ])
     # New tasks stream into #tasks; grouped_controller.js files them from there.

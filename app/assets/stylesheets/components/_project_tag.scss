@@ -97,3 +97,11 @@ a.project-tag:hover { color: var(--ink); text-decoration: underline; }
 .swatch--lime      { --dot: var(--lime); }
 .swatch--orchid    { --dot: var(--orchid); }
 .swatch--sand      { --dot: var(--sand); }
+
+// --- Hiding one ----------------------------------------------------------------
+// The form button_to wraps around Hide and Show would break the line it sits
+// on. Inline, it reads like the links beside it.
+
+.hiding-toggle { display: inline; }
+
+.is-actions .hiding-toggle { margin-right: var(--space-4); }

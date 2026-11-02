@@ -22,9 +22,12 @@ class DashboardController < ApplicationController
 
   private
 
-  # Everything still to do, in list order. The priority list and the rest are
-  # both cut from it.
-  def pending = current_team.tasks.pending.in_order.includes(:created_by, :project)
+  # Everything still to do, in list order, less the projects you hid. The
+  # priority list and the rest are both cut from it.
+  def pending
+    current_team.tasks.pending.outside(current_membership.hidden_project_ids)
+      .in_order.includes(:created_by, :project)
+  end
 
   # Remembered, so the dashboard opens the way you left it.
   def view

@@ -1,0 +1,12 @@
+<%# The projects you took off this list, each a click from coming back. %>
+<% if projects.any? %>
+  <div class="hidden-projects">
+    <span class="hidden-projects__label">Hidden</span>
+    <% projects.each do |project| %>
+      <span class="hidden-projects__item">
+        <%= project_tag(project) %>
+        <%= render "projects/hiding_toggle", project: project, hidden: true %>
+      </span>
+    <% end %>
+  </div>
+<% end %>
