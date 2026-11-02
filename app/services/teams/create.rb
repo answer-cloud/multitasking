@@ -5,14 +5,18 @@ module Teams
   # owner membership, and a Stripe customer. The first two are one transaction;
   # the third is deferred so a Stripe outage cannot stop someone signing up.
   class Create < ApplicationService
-    def initialize(name:, owner:, slug: nil)
+    def initialize(name:, owner:, slug: nil, time_zone: nil)
       @name = name
       @owner = owner
       @slug = slug
+      @time_zone = time_zone
     end
 
     def call
       team = Team.new(name: @name, slug: @slug)
+      # The founder's browser zone, so the evening summary lands in their
+      # evening. Left at the column's UTC when there is none to go on.
+      team.time_zone = @time_zone if @time_zone.present?
 
       ActiveRecord::Base.transaction do
         return failure_from(team) unless team.save

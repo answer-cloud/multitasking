@@ -246,7 +246,7 @@ The split is deliberate:
 
 | Goes in | What |
 |---|---|
-| **Rails credentials** (encrypted, committed) | Stripe keys, Stripe webhook secret, Stripe price ids, Sentry DSN, and — optionally — `google.{client_id,client_secret}` |
+| **Rails credentials** (encrypted, committed) | Stripe keys, Stripe webhook secret, Stripe price ids, Sentry DSN, and — optionally — `google.{client_id,client_secret}` and `anthropic.api_key` |
 | **Environment variables** (`.env.example`) | `DATABASE_URL`, `REDIS_URL`, `APP_HOST`, ports, thread counts, AWS region and bucket |
 | **Nowhere** | AWS access keys — see below |
 
@@ -294,6 +294,20 @@ npm run build && npm run build:css
 bin/rails db:migrate
 bin/rails assets:precompile
 ```
+
+**Cron job**
+
+One, set up under the app's Cron Jobs in Hatchbox:
+
+```
+0 * * * *   bin/rails summaries:evening
+```
+
+It runs hourly and queues the day's summary for every team whose time has
+passed 9pm, in the zone set on its team settings page. Sidekiq does the
+writing, through Claude, with `anthropic.api_key` from credentials. With no
+key the job runs and writes nothing. A missed hour is caught up by the next,
+and running it twice writes one summary — see `Summaries::ScheduleEveningJob`.
 
 **Required environment variables**
 

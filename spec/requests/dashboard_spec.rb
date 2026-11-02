@@ -231,4 +231,16 @@ RSpec.describe "Dashboard" do
 
     expect(response.body).to include("Good evening")
   end
+
+  it "shows tonight's summary over the done list once it has been written, and only this team's" do
+    tenant = create_tenant
+    create(:daily_summary, team: tenant.team, body: "A day of small wins.")
+    create(:daily_summary, team: create_tenant.team, body: "Their secret day.")
+    sign_in tenant.owner
+
+    get dashboard_path
+
+    expect(response.body).to include("A day of small wins.")
+    expect(response.body).not_to include("Their secret day.")
+  end
 end

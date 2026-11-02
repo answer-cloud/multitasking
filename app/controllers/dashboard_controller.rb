@@ -14,7 +14,7 @@ class DashboardController < ApplicationController
     @priorities = policy_scope(pending.prioritized)
     @tasks = policy_scope(pending.unprioritized)
     @projects = current_team.projects.alphabetical.to_a
-    @done_today = policy_scope(current_team.tasks.done_today.recently_done.includes(:project))
+    set_done_today
     @new_task = current_team.tasks.new
     @view = view
     @groups = by_project(@tasks) if @view == "projects"
@@ -27,6 +27,13 @@ class DashboardController < ApplicationController
   def pending
     current_team.tasks.pending.outside(current_membership.hidden_project_ids)
       .in_order.includes(:created_by, :project)
+  end
+
+  # What went in the jar today, and Claude's note on it — written at 9pm, so
+  # nil for most of the day.
+  def set_done_today
+    @done_today = policy_scope(current_team.tasks.done_today.recently_done.includes(:project))
+    @summary = policy_scope(current_team.daily_summaries).find_by(day: Date.current)
   end
 
   # Remembered, so the dashboard opens the way you left it.

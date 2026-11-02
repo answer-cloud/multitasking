@@ -76,5 +76,9 @@ module Multitasking
     # depends on it. See SKILL.md §2a.
     config.x.google_client_id     = credentials.dig(:google, :client_id)
     config.x.google_client_secret = credentials.dig(:google, :client_secret)
+
+    # The evening summary of each team's day. Optional — blank means off: the
+    # job still runs and quietly writes nothing. See Summaries::SummarizeDay.
+    config.x.anthropic_api_key = credentials.dig(:anthropic, :api_key)
   end
 end

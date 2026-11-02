@@ -26,6 +26,13 @@
         <p class="field__hint">Lowercase letters, numbers and hyphens only.</p>
       </div>
 
+      <div class="field">
+        <%= f.label :time_zone, "Time zone", class: "field__label" %>
+        <%# The saved zone goes first, so one Rails has no friendly name for still shows. %>
+        <%= f.time_zone_select :time_zone, [ @team.zone ].compact, {}, class: "select" %>
+        <p class="field__hint">The day’s summary is written at 9pm here.</p>
+      </div>
+
       <div class="form-actions">
         <%= f.submit "Save settings", class: "btn btn--primary" %>
       </div>

@@ -2,7 +2,7 @@
 
 # The task list. The dashboard shows what is still to do; this index is the
 # done pile, searchable, paged and grouped by day, so finished work is never
-# truly gone.
+# truly gone. The month's chart and each day's summary sit on top of it.
 class TasksController < ApplicationController
   before_action :set_task, only: %i[show edit update destroy]
 
@@ -11,6 +11,8 @@ class TasksController < ApplicationController
     @days = done.days_done
     @day = day
     @page = paginate(done.done_on(@day).recently_done)
+    @summaries = summaries_for(@page.map { |task| task.completed_at.to_date }.uniq)
+    set_month_chart
   end
 
   def show
@@ -84,6 +86,22 @@ class TasksController < ApplicationController
     Date.iso8601(params[:day].to_s)
   rescue Date::Error
     nil
+  end
+
+  def summaries_for(days)
+    policy_scope(current_team.daily_summaries).where(day: days).index_by(&:day)
+  end
+
+  # Every task finished this month, by day, first finished first — the order
+  # its blocks stack in — and the best day ever, which tops the scale. The
+  # chart ignores the search: it is the whole month.
+  def set_month_chart
+    done = policy_scope(scoped_tasks.done)
+    @month = Date.current.all_month
+    @month_days = done.where(completed_at: @month.first.beginning_of_day..@month.last.end_of_day)
+      .includes(:project).order(:completed_at)
+      .group_by { |task| task.completed_at.to_date }
+    @best_day_ever = done.days_done.values.max.to_i
   end
 
   def build_quick_add_task

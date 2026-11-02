@@ -1,0 +1,7 @@
+<%# Claude's evening note on a day. Nothing at all until it has been written. %>
+<% if summary %>
+  <div class="day-summary">
+    <p class="day-summary__label">The day, in brief</p>
+    <%= simple_format(summary.body, { class: "day-summary__body" }, wrapper_tag: "p") %>
+  </div>
+<% end %>

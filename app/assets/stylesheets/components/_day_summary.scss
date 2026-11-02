@@ -1,0 +1,24 @@
+@use "../abstracts/mixins" as *;
+
+// Claude's note on a day, under the day's heading on the done pile and over
+// the dashboard's done list. A quiet panel: it is a caption on the work, not
+// the work.
+
+.day-summary {
+  max-width: var(--measure);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--lilac);
+  background-color: var(--paper-raised);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.day-summary__label { @include label; margin-bottom: var(--space-1); }
+
+.day-summary__body {
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--ink-secondary);
+
+  & + & { margin-top: var(--space-2); }
+}

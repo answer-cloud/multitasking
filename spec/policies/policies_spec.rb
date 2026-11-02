@@ -138,6 +138,40 @@ RSpec.describe "Policies" do
     end
   end
 
+  describe DailySummaryPolicy do
+    let(:summary) { create(:daily_summary, team: team) }
+
+    it "lets every role read the day's summary" do
+      [ owner, admin, member ].each do |user|
+        expect(as(user, summary, :show?)).to be(true)
+        expect(as(user, summary, :index?)).to be(true)
+      end
+    end
+
+    # Only Summaries::SummarizeDay writes one. Not even an owner may write,
+    # rewrite or delete what Claude said about a day.
+    it "lets no role write, change or delete one" do
+      [ owner, admin, member ].each do |user|
+        %i[create? update? destroy?].each do |question|
+          expect(as(user, summary, question)).to be(false)
+        end
+      end
+    end
+
+    it "refuses everything to a non-member" do
+      %i[show? index?].each do |question|
+        expect(as(outsider, summary, question)).to be(false)
+      end
+    end
+
+    it "scopes to nothing for a non-member" do
+      summary
+      acting_as(outsider, team: team) do
+        expect(DailySummaryPolicy::Scope.new(outsider, team.daily_summaries).resolve).to be_empty
+      end
+    end
+  end
+
   describe ProjectPolicy do
     let(:project) { create(:project, team: team) }
 

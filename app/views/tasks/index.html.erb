@@ -4,6 +4,8 @@
   <%= link_to "Back to the list", dashboard_path, class: "btn btn--ghost" %>
 <% end %>
 
+<%= render "tasks/month_chart", days: @month_days, month: @month, best_day_ever: @best_day_ever %>
+
 <%= form_with url: tasks_path, method: :get, class: "filter-bar",
       data: { controller: "autosubmit", action: "input->autosubmit#submit" } do %>
   <%= search_field_tag :q, params[:q], placeholder: "Search finished tasks", class: "input" %>
@@ -20,6 +22,7 @@
         <%= link_to_unless day == @day, day_label(day), tasks_path(day: day.iso8601, q: params[:q].presence) %>
         <span class="tally numeric"><%= @days.fetch(day, tasks.size) %></span>
       </h2>
+      <%= render "tasks/summary", summary: @summaries[day] %>
 
       <div class="table-wrap">
         <table class="table">

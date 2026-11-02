@@ -183,7 +183,7 @@ end
 - Failures are returned, not raised — controllers re-render with the message
 - Invariants that must *always* hold (a team keeps an owner) belong on the
   **model**, not in the service, so every caller inherits them
-- Namespace by domain: `Teams::`, `Billing::`, `Users::`, `Admin::`
+- Namespace by domain: `Teams::`, `Billing::`, `Users::`, `Admin::`, `Summaries::`
 
 Do not add a step DSL, dry-rb, or a result monad. `ApplicationService` is
 twenty lines and should stay that way.
@@ -311,7 +311,7 @@ Price ids come from credentials via `Plan#stripe_price_id`, never from
 
 | Goes in | What |
 |---|---|
-| **Rails credentials** | Stripe keys and webhook secret, Stripe price ids, Sentry DSN, Google OAuth client (optional) |
+| **Rails credentials** | Stripe keys and webhook secret, Stripe price ids, Sentry DSN, Google OAuth client (optional), Anthropic API key (optional) |
 | **Environment variables** | `DATABASE_URL`, `REDIS_URL`, `APP_HOST`, ports, thread counts, AWS region and bucket |
 | **Nowhere** | AWS access keys |
 

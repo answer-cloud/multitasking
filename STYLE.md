@@ -120,7 +120,7 @@ method bodies.
 | Boolean local | Positive, never negated | `selected`, not `not_selected` |
 
 Namespace services and jobs by domain: `Teams::`, `Billing::`, `Users::`,
-`Admin::`. A service that does not fit one of those is a hint that the domain
+`Admin::`, `Summaries::`. A service that does not fit one of those is a hint that the domain
 list needs a new entry — not that it should go at the top level.
 
 ### Guard clauses over nesting

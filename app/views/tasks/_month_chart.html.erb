@@ -1,0 +1,60 @@
+<%# One bar a day for the month, one block a task, in its project's colour. The
+    scale tops out at the best day ever, so a good day this month looks as good
+    as it was, not as good as this month allows. %>
+<% counts = days.transform_values(&:size) %>
+<% month_best = counts.values.max.to_i %>
+<% top = [ best_day_ever, month_best, 1 ].max %>
+<% projects = days.values.flatten.map(&:project).uniq.sort_by { |project| project ? [ 0, project.name.downcase ] : [ 1, "" ] } %>
+
+<figure class="month-chart" aria-labelledby="month_chart_title">
+  <figcaption class="month-chart__head">
+    <h2 id="month_chart_title"><%= month.first.strftime("%B") %></h2>
+    <dl class="month-chart__stats">
+      <div><dt>Done</dt><dd class="numeric"><%= counts.values.sum %></dd></div>
+      <div><dt>Month best</dt><dd class="numeric"><%= month_best %></dd></div>
+      <div><dt>All-time best</dt><dd class="numeric"><%= best_day_ever %></dd></div>
+    </dl>
+  </figcaption>
+
+  <div class="month-chart__plot" style="--top: <%= top %>; --days: <%= month.count %>">
+    <% if month_best.positive? %>
+      <% if month_best == best_day_ever %>
+        <div class="month-chart__line month-chart__line--ever" style="--at: <%= month_best %>" aria-hidden="true">
+          <span class="month-chart__line-label">Month and all-time best · <%= month_best %></span>
+        </div>
+      <% else %>
+        <div class="month-chart__line month-chart__line--ever" style="--at: <%= best_day_ever %>" aria-hidden="true">
+          <span class="month-chart__line-label">All-time best · <%= best_day_ever %></span>
+        </div>
+        <div class="month-chart__line" style="--at: <%= month_best %>" aria-hidden="true">
+          <span class="month-chart__line-label">Month best · <%= month_best %></span>
+        </div>
+      <% end %>
+    <% end %>
+
+    <ol class="month-chart__days">
+      <% month.each do |date| %>
+        <% tasks = days.fetch(date, []) %>
+        <li class="<%= class_names("month-chart__day", "is-today": date == Date.current) %>">
+          <% if tasks.any? %>
+            <%= link_to tasks_path(day: date.iso8601), class: "month-chart__bar", style: "--count: #{tasks.size}",
+                  "aria-label": chart_day_label(date, tasks.size) do %>
+              <% tasks.each do |task| %>
+                <span class="month-chart__block month-chart__block--<%= task.project&.color || "other" %>" title="<%= task.title %>"></span>
+              <% end %>
+            <% end %>
+          <% end %>
+          <span class="month-chart__date numeric" aria-hidden="true"><%= date.day %></span>
+        </li>
+      <% end %>
+    </ol>
+  </div>
+
+  <% if projects.any? %>
+    <ul class="month-chart__legend" aria-label="Projects">
+      <% projects.each do |project| %>
+        <li><%= project_tag(project) %></li>
+      <% end %>
+    </ul>
+  <% end %>
+</figure>
