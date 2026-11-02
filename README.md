@@ -246,8 +246,8 @@ The split is deliberate:
 
 | Goes in | What |
 |---|---|
-| **Rails credentials** (encrypted, committed) | Stripe keys, Stripe webhook secret, Stripe price ids, Sentry DSN, and — optionally — `google.{client_id,client_secret}` and `anthropic.api_key` |
-| **Environment variables** (`.env.example`) | `DATABASE_URL`, `REDIS_URL`, `APP_HOST`, ports, thread counts, AWS region and bucket |
+| **Rails credentials** (encrypted, committed) | Stripe keys, Stripe webhook secret, Stripe price ids, Sentry DSN, the production `app_host`, and — optionally — `google.{client_id,client_secret}` and `anthropic.api_key` |
+| **Environment variables** (`.env.example`) | `DATABASE_URL`, `REDIS_URL`, ports, thread counts, AWS region and bucket |
 | **Nowhere** | AWS access keys — see below |
 
 Credentials are per-environment: `config/credentials/development.yml.enc` and
@@ -316,8 +316,8 @@ and running it twice writes one summary — see `Summaries::ScheduleEveningJob`.
 | `RAILS_MASTER_KEY` | Decrypts `config/credentials/production.yml.enc`. The only secret the platform must hold |
 | `DATABASE_URL` | Provided by Hatchbox |
 | `REDIS_URL` | Sidekiq, cache, and Action Cable |
-| `APP_HOST` | e.g. `app.example.com`. Used for mail links and `config.hosts` |
-| `APP_PROTOCOL` | `https` |
+| `APP_HOST` | Optional. e.g. `app.example.com`, for mail links and `config.hosts`. Unset, `app_host` in credentials is used |
+| `APP_PROTOCOL` | Optional. Defaults to `https` |
 | `MAILER_FROM` | Must be a verified SES identity |
 | `SUPPORT_EMAIL` | Shown in security-related email |
 | `AWS_REGION` | For SES and S3 |
