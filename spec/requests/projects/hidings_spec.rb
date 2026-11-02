@@ -95,15 +95,15 @@ RSpec.describe "Hiding projects" do
   end
 
   describe "the projects page" do
-    it "offers Hide on a shown project and Show on a hidden one" do
+    it "offers to hide a shown project and to show a hidden one" do
       other = create(:project, team: tenant.team, name: "Backoffice")
       membership.hide!(other)
 
       get projects_path
 
       page = Nokogiri::HTML(response.body)
-      expect(page.at_css(%(form[action="#{project_hiding_path(project)}"] button)).text).to eq("Hide")
-      expect(page.at_css(%(form[action="#{project_hiding_path(other)}"] button)).text).to eq("Show")
+      expect(page.at_css(%(form[action="#{project_hiding_path(project)}"] button))["aria-label"]).to eq("Hide Storefront on your list")
+      expect(page.at_css(%(form[action="#{project_hiding_path(other)}"] button))["aria-label"]).to eq("Show Backoffice on your list")
     end
   end
 end
