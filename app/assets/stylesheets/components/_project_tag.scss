@@ -99,9 +99,37 @@ a.project-tag:hover { color: var(--ink); text-decoration: underline; }
 .swatch--sand      { --dot: var(--sand); }
 
 // --- Hiding one ----------------------------------------------------------------
-// The form button_to wraps around Hide and Show would break the line it sits
-// on. Inline, it reads like the links beside it.
+// An eye beside the project: open while it is on your list, shut while it is
+// hidden. Drawn in line like the priority star, quiet until you point at it.
+// The form button_to wraps around it would break the line, so it goes inline.
 
-.hiding-toggle { display: inline; }
+.hiding-toggle { display: inline-block; vertical-align: middle; }
+
+.hiding-toggle__button {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-tertiary);
+  cursor: pointer;
+  transition: color 160ms ease-out, transform 160ms var(--spring);
+
+  svg {
+    width: var(--space-5);
+    height: var(--space-5);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  &:hover { color: var(--ink); transform: scale(1.12); }
+  &:active { transform: scale(0.88); }
+  &:focus-visible { @include focus-ring; }
+}
+
+.hiding-toggle__pupil { fill: currentColor; stroke: none; }
 
 .is-actions .hiding-toggle { margin-right: var(--space-4); }
