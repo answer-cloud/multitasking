@@ -45,6 +45,25 @@
     </section>
 
     <section class="stack">
+      <h2>5. Slack</h2>
+      <% if @slack %>
+        <p class="muted">Connected to <%= @slack.slack_team_name.presence || "your Slack" %>. React to any message with 📌 <code>:<%= SlackConnection::EMOJI %>:</code> and it lands here, linked back to the message. Pin it again after ticking it off and it comes back. Or copy a message’s link in Slack and paste it into the quick-add box.</p>
+        <p><%= button_to "Disconnect Slack", slack_connection_path, method: :delete, class: "btn btn--sm btn--ghost" %></p>
+      <% elsif SlackConnection.configured? %>
+        <p class="muted">React to any message with 📌 <code>:<%= SlackConnection::EMOJI %>:</code> and it lands here, linked back to the message. Or paste a message’s link into the quick-add box. Each person connects their own Slack. Done reads only the messages you pin or paste.</p>
+        <p><%= button_to "Connect Slack", slack_connection_path, class: "btn btn--sm", form: { data: { turbo: false } } %></p>
+      <% elsif policy(current_team).update? %>
+        <p class="muted">Slack is not set up yet. Create a Slack app at <code>api.slack.com/apps</code> → <em>From a manifest</em>, and paste this. Then put its client id, client secret and signing secret in credentials under <code>slack:</code>. See README.md.</p>
+        <div data-controller="clipboard">
+          <pre data-clipboard-target="source"><%= slack_manifest %></pre>
+          <button type="button" class="btn btn--sm" data-clipboard-target="button" data-action="clipboard#copy">Copy</button>
+        </div>
+      <% else %>
+        <p class="muted">Slack is not set up yet. Ask a team admin.</p>
+      <% end %>
+    </section>
+
+    <section class="stack">
       <h2>Anything else</h2>
       <p class="muted">Any tool can post JSON to the inbox. Send the same <code>external_id</code> twice and it updates one task. Send a <code>directory</code> and the task is filed under that folder’s <%= link_to "project", projects_path %>.</p>
       <pre>curl -X POST <%= inbox_tasks_url %> \

@@ -44,6 +44,17 @@ Rails.application.routes.draw do
   # The page that sets up the hooks, and rotates the inbox token they use.
   resource :connection, only: %i[show update]
 
+  namespace :slack do
+    # Linking your own Slack, so a 📌 on a message makes it a task.
+    resource :connection, only: %i[create destroy] do
+      get :callback
+    end
+
+    # Slack posts reactions here. No session, no CSRF, signature verified
+    # instead — see Slack::EventsController.
+    resources :events, only: :create
+  end
+
   # Other tools push tasks in here. Bearer token, no session, no CSRF — see
   # Inbox::TasksController.
   namespace :inbox do

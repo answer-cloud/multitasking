@@ -3,9 +3,9 @@
 # One thing to get done, wherever it came from.
 #
 # A task is typed or spoken into the app, or pushed in by another tool — a
-# Claude Code or Codex hook, later Chrome, Slack and email. Pushed tasks carry
-# an `external_id`, so a second ping about the same session moves the task back
-# to the top instead of adding a duplicate.
+# Claude Code or Codex hook, a 📌 in Slack, later Chrome and email. Pushed
+# tasks carry an `external_id`, so a second ping about the same session moves
+# the task back to the top instead of adding a duplicate.
 # == Schema Information
 #
 # Table name: tasks
@@ -192,6 +192,18 @@ class Task < ApplicationRecord
   # agrees with what was on screen.
   def put_on_top
     self.position = siblings.minimum(:position).to_i - 1
+  end
+
+  # Moves the task to the top of any open dashboard for its team, and out of
+  # the jar if it had been ticked off. A priority task stays in the priority
+  # list. For tasks that arrive from outside — the inbox, Slack — where no
+  # request is there to answer with a stream of its own.
+  def broadcast_arrival
+    Turbo::StreamsChannel.broadcast_remove_to(team, :tasks, target: self)
+    Turbo::StreamsChannel.broadcast_remove_to(team, :tasks, target: ActionView::RecordIdentifier.dom_id(self, :done))
+    Turbo::StreamsChannel.broadcast_prepend_to(team, :tasks, target: ApplicationController.helpers.task_list_id(self), partial: "tasks/task",
+                                                             locals: { task: self, projects: team.projects.alphabetical.to_a })
+    Turbo::StreamsChannel.broadcast_update_to(team, :tasks, targets: "[data-done-count]", html: team.tasks.done_today.count.to_s)
   end
 
   # Drops the task into its list of things still to do at `index`, counting

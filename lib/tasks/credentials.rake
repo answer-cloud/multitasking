@@ -29,6 +29,14 @@ namespace :credentials do
     # console.anthropic.com. Blank means no summaries are written.
     anthropic:
       api_key:
+
+    # Optional. Slack — a 📌 on a message makes it a task. Create the app from
+    # the manifest on the Connections page, then copy these three from its
+    # Basic Information page. Blank hides the Connect button.
+    slack:
+      client_id:
+      client_secret:
+      signing_secret:
   YAML
 
   desc "Create config/credentials/development.yml.enc if it does not exist yet"
