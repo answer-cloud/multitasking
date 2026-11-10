@@ -59,6 +59,15 @@ RSpec.describe Slack::AddMessage do
     expect(replies.with(body: hash_including("ts" => "1711.0000", "oldest" => "1712.0001"))).to have_been_requested
   end
 
+  it "files the message under the project it is given" do
+    message_says("Send the contract")
+    project = create(:project, team: tenant.team)
+
+    task = described_class.call(connection: connection, channel: "C1", ts: "1712.0001", project: project).value
+
+    expect(task.project).to eq(project)
+  end
+
   it "leaves a message already on the list alone, so a redelivery changes nothing" do
     message_says("Send the contract")
     task = add.value

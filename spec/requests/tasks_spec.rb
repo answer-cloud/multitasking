@@ -231,6 +231,37 @@ RSpec.describe "Tasks" do
         expect(tenant.team.tasks.count).to eq(1)
       end
 
+      it "files the message under a project named before the link" do
+        create(:slack_connection, team: tenant.team, user: tenant.member)
+        project = create(:project, team: tenant.team, name: "WCH")
+        message_says("Send Sam the contract")
+
+        post tasks_path, params: { task: { title: "WCH #{link}" } }, as: :turbo_stream
+
+        expect(tenant.team.tasks.sole).to have_attributes(title: "Send Sam the contract", source: "slack", project: project)
+      end
+
+      it "files a message already on the list when it is pasted again with a project" do
+        create(:slack_connection, team: tenant.team, user: tenant.member)
+        project = create(:project, team: tenant.team, name: "WCH")
+        message_says("Send Sam the contract")
+        post tasks_path, params: { task: { title: link } }, as: :turbo_stream
+
+        post tasks_path, params: { task: { title: "WCH #{link}" } }, as: :turbo_stream
+
+        expect(tenant.team.tasks.sole.project).to eq(project)
+      end
+
+      it "never files the message under another team's project" do
+        create(:slack_connection, team: tenant.team, user: tenant.member)
+        theirs = create(:project, team: create_tenant.team)
+        message_says("Send Sam the contract")
+
+        post tasks_path, params: { task: { title: link, project_id: theirs.id } }, as: :turbo_stream
+
+        expect(tenant.team.tasks.sole.project).to be_nil
+      end
+
       it "keeps the link when this person has not connected Slack" do
         create(:slack_connection, team: tenant.team, user: tenant.owner)
 
