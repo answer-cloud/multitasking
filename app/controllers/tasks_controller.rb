@@ -128,7 +128,8 @@ class TasksController < ApplicationController
     task.title = rest
   end
 
-  # A Slack message link, pasted on its own, becomes that message: read
+  # A Slack message link, pasted on its own or after a project's name
+  # ("WCH <link>"), becomes that message, filed under the project. Read
   # through the person's own Slack connection, it is the same task a 📌 makes,
   # and pasting it again changes nothing. With no connection, or if Slack
   # will not hand the message over, it is added as a link to the message.
@@ -137,7 +138,7 @@ class TasksController < ApplicationController
     link = SlackConnection.message_in(task.title)
     return if link.nil?
 
-    message = slack_message(link)
+    message = slack_message(link, project: task.project)
     return message if message
 
     task.url = task.title
@@ -145,11 +146,15 @@ class TasksController < ApplicationController
     nil
   end
 
-  def slack_message(link)
+  # The project comes from quick add's leading name or its picker. The picker's
+  # id is only a claim until it is found through the team, because this task
+  # skips the save that would have checked it.
+  def slack_message(link, project:)
     connection = current_team.slack_connections.find_by(user: Current.user) unless impersonating?
     return if connection.nil?
 
-    result = Slack::AddMessage.call(connection: connection, **link)
+    project = current_team.projects.find_by(id: project&.id)
+    result = Slack::AddMessage.call(connection: connection, project: project, **link)
     result.value if result.success?
   rescue Slack::Api::Unavailable
     nil # Slack is busy. The link is still worth keeping.

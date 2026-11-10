@@ -17,17 +17,21 @@ module Slack
     # `thread_ts` is the thread a reply sits in, when the caller knows it — a
     # pasted link says; a 📌 does not, and Slack finds the thread from the
     # reply's own timestamp.
-    def initialize(connection:, channel:, ts:, thread_ts: nil)
+    #
+    # `project` is one the person named in quick add ("WCH <link>"). It must
+    # be one of the team's own: the caller looks it up through the team.
+    def initialize(connection:, channel:, ts:, thread_ts: nil, project: nil)
       @connection = connection
       @team = connection.team
       @channel = channel.to_s
       @ts = ts.to_s
       @thread_ts = thread_ts.presence&.to_s
+      @project = project
     end
 
     def call
       task = @team.tasks.find_or_initialize_by(source: "slack", external_id: external_id)
-      return success(task) if task.persisted? && !task.done?
+      return refile(task) if task.persisted? && !task.done?
 
       task.new_record? ? create(task) : reopen(task)
     rescue ActiveRecord::RecordNotUnique
@@ -52,7 +56,15 @@ module Slack
       arrived(task)
     end
 
+    # Already on the list. Naming a project files it there; nothing else
+    # changes, so a redelivered 📌 is still a no-op.
+    def refile(task)
+      task.update!(project: @project) if @project && task.project != @project
+      success(task)
+    end
+
     def reopen(task)
+      task.project = @project if @project
       task.reopen!
       arrived(task)
     end
@@ -70,6 +82,7 @@ module Slack
         title: title,
         notes: (text.strip.first(10_000) unless text.squish == title),
         url: permalink,
+        project: @project,
         created_by: @connection.user
       )
     end
