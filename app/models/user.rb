@@ -52,6 +52,7 @@ class User < ApplicationRecord
   has_many :sent_invitations, class_name: "TeamInvitation", foreign_key: :invited_by_id,
                               dependent: :destroy, inverse_of: :invited_by
   has_many :impersonation_events, dependent: :destroy
+  has_many :slack_connections, dependent: :destroy
   has_many :performed_impersonations, class_name: "ImpersonationEvent",
                                       foreign_key: :admin_id, dependent: :destroy,
                                       inverse_of: :admin

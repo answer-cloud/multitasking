@@ -2,7 +2,8 @@
 
 module Inbox
   # Where other tools push tasks in: Claude Code and Codex hooks today, and the
-  # Chrome extension, Slack and email later.
+  # Chrome extension and email later. Slack has its own door; see
+  # Slack::EventsController.
   #
   # There is no user here. The caller proves which team it writes to with the
   # team's inbox token, sent as a bearer token — never in the URL, where it
@@ -35,7 +36,7 @@ module Inbox
       task.project ||= @team.projects.claim_directory(params[:directory])
 
       if task.save
-        broadcast(task)
+        task.broadcast_arrival
         render json: { id: task.id, created: task.previously_new_record? },
                status: task.previously_new_record? ? :created : :ok
       else
@@ -82,19 +83,6 @@ module Inbox
         url: params[:url].presence,
         source: pushed_source
       }
-    end
-
-    # Moves the task to the top of any open dashboard for this team, and out of
-    # the jar if it had been ticked off. A priority task stays in the priority
-    # list.
-    def broadcast(task)
-      list = ApplicationController.helpers.task_list_id(task)
-
-      Turbo::StreamsChannel.broadcast_remove_to(@team, :tasks, target: task)
-      Turbo::StreamsChannel.broadcast_remove_to(@team, :tasks, target: ActionView::RecordIdentifier.dom_id(task, :done))
-      Turbo::StreamsChannel.broadcast_prepend_to(@team, :tasks, target: list, partial: "tasks/task",
-                                                                locals: { task: task, projects: @team.projects.alphabetical.to_a })
-      Turbo::StreamsChannel.broadcast_update_to(@team, :tasks, targets: "[data-done-count]", html: @team.tasks.done_today.count.to_s)
     end
 
     def pushed_source = params[:source].to_s.in?(PUSHED_SOURCES) ? params[:source].to_s : "claude"
