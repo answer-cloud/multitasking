@@ -92,6 +92,15 @@ RSpec.describe Task do
     end
   end
 
+  describe "headline" do
+    it "drops the hook's review prefix and keeps everything else" do
+      expect(build(:task, title: "Review Claude: Fix the login bug").headline).to eq("Fix the login bug")
+      expect(build(:task, title: "Review Codex: Add dark mode").headline).to eq("Add dark mode")
+      expect(build(:task, title: "Claude needs you: Pick a font").headline).to eq("Claude needs you: Pick a font")
+      expect(build(:task, title: "Review the deck").headline).to eq("Review the deck")
+    end
+  end
+
   describe "quiet" do
     it "is quiet once nobody has touched it for a while" do
       expect(build(:task, last_activity_at: 3.days.ago)).to be_quiet
