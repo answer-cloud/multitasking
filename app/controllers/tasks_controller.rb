@@ -32,12 +32,14 @@ class TasksController < ApplicationController
   end
 
   # Quick add, from the box at the top of the dashboard. Typed or spoken, it
-  # lands here; the `source` says which.
+  # lands here; the `source` says which. A pasted Slack link brings in the
+  # message it points at — see #add_from_slack.
   def create
     @task = build_quick_add_task
     authorize @task
+    @task = add_from_slack(@task) || @task
 
-    if @task.save
+    if @task.persisted? || @task.save
       respond_to do |format|
         format.turbo_stream
         format.html { redirect_to dashboard_path, notice: "Added." }
@@ -124,6 +126,33 @@ class TasksController < ApplicationController
 
     task.project = project
     task.title = rest
+  end
+
+  # A Slack message link, pasted on its own, becomes that message: read
+  # through the person's own Slack connection, it is the same task a 📌 makes,
+  # and pasting it again changes nothing. With no connection, or if Slack
+  # will not hand the message over, it is added as a link to the message.
+  # Never while impersonating: support staff do not read somebody's Slack.
+  def add_from_slack(task)
+    link = SlackConnection.message_in(task.title)
+    return if link.nil?
+
+    message = slack_message(link)
+    return message if message
+
+    task.url = task.title
+    task.title = "Slack message"
+    nil
+  end
+
+  def slack_message(link)
+    connection = current_team.slack_connections.find_by(user: Current.user) unless impersonating?
+    return if connection.nil?
+
+    result = Slack::AddMessage.call(connection: connection, **link)
+    result.value if result.success?
+  rescue Slack::Api::Unavailable
+    nil # Slack is busy. The link is still worth keeping.
   end
 
   def task_params

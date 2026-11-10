@@ -58,7 +58,7 @@ module Multitasking
     # The product's display name — the only place it is written down. Views,
     # mailers and the PWA manifest all read it through the `app_name` helper,
     # so renaming the application does not mean hunting through templates.
-    config.x.app_name = ENV.fetch("APP_NAME", "Multitasking")
+    config.x.app_name = ENV.fetch("APP_NAME", "Done")
 
     # One line about the product, for search results, link previews and the
     # manifest. A page with something better to say sets content_for :description.
@@ -84,5 +84,12 @@ module Multitasking
     # The evening summary of each team's day. Optional — blank means off: the
     # job still runs and quietly writes nothing. See Summaries::SummarizeDay.
     config.x.anthropic_api_key = credentials.dig(:anthropic, :api_key)
+
+    # Slack: react to a message with a pin and it becomes a task. Optional —
+    # blank means off. The app is created from the manifest on the connections
+    # page; see SlackConnection and README.md.
+    config.x.slack_client_id      = credentials.dig(:slack, :client_id)
+    config.x.slack_client_secret  = credentials.dig(:slack, :client_secret)
+    config.x.slack_signing_secret = credentials.dig(:slack, :signing_secret)
   end
 end

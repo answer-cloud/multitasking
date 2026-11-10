@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_02_130100) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_06_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -95,6 +95,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_02_130100) do
     t.index ["team_id", "directory"], name: "index_projects_on_team_id_and_directory", unique: true, where: "(directory IS NOT NULL)"
     t.index ["team_id", "name"], name: "index_projects_on_team_id_and_name"
     t.index ["team_id"], name: "index_projects_on_team_id"
+  end
+
+  create_table "slack_connections", force: :cascade do |t|
+    t.text "access_token", null: false
+    t.datetime "created_at", null: false
+    t.string "slack_team_id", null: false
+    t.string "slack_team_name"
+    t.string "slack_user_id", null: false
+    t.bigint "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["slack_team_id", "slack_user_id"], name: "index_slack_connections_on_slack_team_id_and_slack_user_id", unique: true
+    t.index ["team_id", "user_id"], name: "index_slack_connections_on_team_id_and_user_id", unique: true
+    t.index ["team_id"], name: "index_slack_connections_on_team_id"
+    t.index ["user_id"], name: "index_slack_connections_on_user_id"
   end
 
   create_table "stripe_events", force: :cascade do |t|
@@ -220,6 +235,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_02_130100) do
   add_foreign_key "memberships", "users"
   add_foreign_key "projects", "teams"
   add_foreign_key "projects", "users", column: "created_by_id"
+  add_foreign_key "slack_connections", "teams"
+  add_foreign_key "slack_connections", "users"
   add_foreign_key "subscriptions", "teams"
   add_foreign_key "tasks", "projects", on_delete: :nullify
   add_foreign_key "tasks", "teams"

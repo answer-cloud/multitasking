@@ -198,6 +198,64 @@ RSpec.describe "Tasks" do
       expect(response.body).to include("Streamed")
     end
 
+    describe "pasting a Slack message link" do
+      let(:link) { "https://acme.slack.com/archives/C1/p1712000100000200?thread_ts=1712000000.000100&cid=C1" }
+
+      def message_says(text)
+        slack_answers("conversations.history", messages: [])
+        replies = slack_answers("conversations.replies", messages: [ { ts: "1712000000.000100", text: "Parent" },
+                                                                    { ts: "1712000100.000200", text: text } ])
+        slack_answers("chat.getPermalink", permalink: link)
+        replies
+      end
+
+      it "adds the message itself, read through the person's own Slack" do
+        create(:slack_connection, team: tenant.team, user: tenant.member)
+        replies = message_says("Send Sam the contract")
+
+        post tasks_path, params: { task: { title: link } }, as: :turbo_stream
+
+        task = tenant.team.tasks.sole
+        expect(task).to have_attributes(title: "Send Sam the contract", source: "slack", external_id: "C1-1712000100.000200",
+                                        url: link, created_by: tenant.member)
+        expect(replies.with(body: hash_including("ts" => "1712000000.000100"))).to have_been_requested
+        expect(response.body).to include("Send Sam the contract")
+      end
+
+      it "changes nothing when the same link is pasted twice" do
+        create(:slack_connection, team: tenant.team, user: tenant.member)
+        message_says("Send Sam the contract")
+
+        2.times { post tasks_path, params: { task: { title: link } }, as: :turbo_stream }
+
+        expect(tenant.team.tasks.count).to eq(1)
+      end
+
+      it "keeps the link when this person has not connected Slack" do
+        create(:slack_connection, team: tenant.team, user: tenant.owner)
+
+        post tasks_path, params: { task: { title: link } }
+
+        expect(tenant.team.tasks.sole).to have_attributes(title: "Slack message", url: link, source: "typed")
+        expect(a_request(:post, %r{slack\.com})).not_to have_been_made
+      end
+
+      it "keeps the link when Slack will not hand the message over" do
+        create(:slack_connection, team: tenant.team, user: tenant.member)
+        slack_answers("conversations.history", ok: false, error: "channel_not_found")
+
+        post tasks_path, params: { task: { title: link } }
+
+        expect(tenant.team.tasks.sole).to have_attributes(title: "Slack message", url: link)
+      end
+
+      it "treats a link inside a sentence as ordinary text" do
+        post tasks_path, params: { task: { title: "Reply to #{link}" } }
+
+        expect(tenant.team.tasks.sole.title).to eq("Reply to #{link}")
+      end
+    end
+
     it "says what went wrong without leaving the page when the title is blank" do
       post tasks_path, params: { task: { title: "" } }, as: :turbo_stream
 

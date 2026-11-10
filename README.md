@@ -240,13 +240,36 @@ stripe listen --forward-to localhost:3000/billing/webhooks
 Run a checkout, confirm the subscription row appears only after the webhook
 lands, then `stripe events resend <id>` and confirm nothing changes twice.
 
+## Slack
+
+React to any Slack message with 📌 (`:pushpin:`) and it becomes a task,
+linked back to the message. Or copy a message's link in Slack (**Copy link**)
+and paste it into the quick-add box: with Slack connected it becomes the same
+task, and without it the link is kept. Slack's own To-dos list has no public
+API, so a reaction or a link is the way in.
+
+1. Open **Connections** as an admin. With no Slack keys in credentials it
+   shows a Slack app manifest with this server's addresses filled in.
+2. At [api.slack.com/apps](https://api.slack.com/apps) choose **Create New
+   App → From a manifest**, pick your workspace, and paste it.
+3. Copy the client id, client secret and signing secret from the app's
+   **Basic Information** page into credentials under `slack:`, and deploy.
+4. Slack checks the events URL with the signing secret, so it could not
+   verify it before step 3. Under **Event Subscriptions**, press **Retry**.
+5. Each person presses **Connect Slack** on the Connections page.
+
+The app asks only for user scopes. It acts as each person who connects, reads
+only the messages they pin or paste, and keeps their token encrypted. Slack signs
+every event and `Slack::EventsController` refuses anything unsigned or older
+than five minutes.
+
 ## Credentials and configuration
 
 The split is deliberate:
 
 | Goes in | What |
 |---|---|
-| **Rails credentials** (encrypted, committed) | Stripe keys, Stripe webhook secret, Stripe price ids, Sentry DSN, the production `app_host`, and — optionally — `google.{client_id,client_secret}` and `anthropic.api_key` |
+| **Rails credentials** (encrypted, committed) | Stripe keys, Stripe webhook secret, Stripe price ids, Sentry DSN, the production `app_host`, and — optionally — `google.{client_id,client_secret}`, `anthropic.api_key` and `slack.{client_id,client_secret,signing_secret}` |
 | **Environment variables** (`.env.example`) | `DATABASE_URL`, `REDIS_URL`, ports, thread counts, AWS region and bucket |
 | **Nowhere** | AWS access keys — see below |
 

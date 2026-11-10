@@ -40,6 +40,7 @@ RSpec.configure do |config|
   config.include AuthenticationHelpers
   config.include TenancyHelpers
   config.include StripeHelpers
+  config.include SlackHelpers
   config.include HtmlHelpers
   config.include GoogleHelpers
 

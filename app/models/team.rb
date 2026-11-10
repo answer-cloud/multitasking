@@ -26,6 +26,7 @@ class Team < ApplicationRecord
   has_many :tasks, dependent: :destroy
   has_many :projects, dependent: :destroy
   has_many :daily_summaries, dependent: :destroy
+  has_many :slack_connections, dependent: :destroy
   has_one :subscription, dependent: :destroy
 
   validates :name, presence: true, length: { maximum: 120 }

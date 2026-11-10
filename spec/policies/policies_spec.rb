@@ -216,4 +216,31 @@ RSpec.describe "Policies" do
       expect(described_class.new(member, outsider).impersonate?).to be(false)
     end
   end
+
+  describe SlackConnectionPolicy do
+    let(:connection_of) { ->(user) { build(:slack_connection, team: team, user: user) } }
+
+    it "lets every role link their own Slack" do
+      expect(as(owner,  connection_of.(owner),  :create?)).to be(true)
+      expect(as(admin,  connection_of.(admin),  :create?)).to be(true)
+      expect(as(member, connection_of.(member), :create?)).to be(true)
+    end
+
+    it "lets every role unlink their own, and nobody unlink anyone else's" do
+      expect(as(member, connection_of.(member), :destroy?)).to be(true)
+      expect(as(owner,  connection_of.(owner),  :destroy?)).to be(true)
+      expect(as(owner,  connection_of.(member), :destroy?)).to be(false)
+      expect(as(admin,  connection_of.(member), :destroy?)).to be(false)
+    end
+
+    it "refuses everything to a non-member and while impersonating" do
+      expect(as(outsider, connection_of.(outsider), :create?)).to be(false)
+
+      acting_as(member, team: team) do
+        Current.true_user = create(:user, :admin)
+        expect(described_class.new(member, connection_of.(member)).create?).to be(false)
+        expect(described_class.new(member, connection_of.(member)).destroy?).to be(false)
+      end
+    end
+  end
 end

@@ -11,4 +11,23 @@ module ConnectionsHelper
     "javascript:(()=>{window.open(#{new_task_url.to_json}+'?'+new URLSearchParams(" \
       "{title:document.title,url:location.href}),'_blank','noopener')})()"
   end
+
+  # The Slack app, as a manifest an admin pastes into api.slack.com, with this
+  # server's own addresses filled in. It asks only for user scopes: Done acts
+  # as each person who connects, never as a bot in their channels.
+  def slack_manifest
+    {
+      "display_information" => { "name" => app_name, "description" => "Pin a message with 📌 and it lands on your list." },
+      "oauth_config" => {
+        "redirect_urls" => [ callback_slack_connection_url ],
+        "scopes" => { "user" => Slack::ConnectionsController::USER_SCOPES }
+      },
+      "settings" => {
+        "event_subscriptions" => { "request_url" => slack_events_url, "user_events" => [ "reaction_added" ] },
+        "org_deploy_enabled" => false,
+        "socket_mode_enabled" => false,
+        "token_rotation_enabled" => false
+      }
+    }.to_yaml.delete_prefix("---\n")
+  end
 end
