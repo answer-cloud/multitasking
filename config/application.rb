@@ -88,7 +88,11 @@ module Multitasking
     # Slack: react to a message with a pin and it becomes a task. Optional —
     # blank means off. The app is created from the manifest on the connections
     # page; see SlackConnection and README.md.
-    config.x.slack_client_id      = credentials.dig(:slack, :client_id)
+    #
+    # Slack's client id looks like a decimal number, and unquoted YAML reads it
+    # as one, rounded — Slack then says "Invalid client_id". Only a quoted
+    # string is the real id, so anything else counts as not set.
+    config.x.slack_client_id      = credentials.dig(:slack, :client_id).then { |id| id if id.is_a?(String) }
     config.x.slack_client_secret  = credentials.dig(:slack, :client_secret)
     config.x.slack_signing_secret = credentials.dig(:slack, :signing_secret)
   end

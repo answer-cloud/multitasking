@@ -32,9 +32,10 @@ namespace :credentials do
 
     # Optional. Slack — a 📌 on a message makes it a task. Create the app from
     # the manifest on the Connections page, then copy these three from its
-    # Basic Information page. Blank hides the Connect button.
+    # Basic Information page. Blank hides the Connect button. Keep the client
+    # id in quotes: unquoted, YAML reads it as a number and rounds it.
     slack:
-      client_id:
+      client_id: ""
       client_secret:
       signing_secret:
   YAML

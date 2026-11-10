@@ -254,6 +254,8 @@ API, so a reaction or a link is the way in.
    App → From a manifest**, pick your workspace, and paste it.
 3. Copy the client id, client secret and signing secret from the app's
    **Basic Information** page into credentials under `slack:`, and deploy.
+   Put the client id in quotes (`client_id: "1234.5678"`): unquoted, YAML
+   reads it as a number and rounds it, and Slack answers "Invalid client_id".
 4. Slack checks the events URL with the signing secret, so it could not
    verify it before step 3. Under **Event Subscriptions**, press **Retry**.
 5. Each person presses **Connect Slack** on the Connections page.
