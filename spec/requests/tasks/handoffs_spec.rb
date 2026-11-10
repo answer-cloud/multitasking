@@ -38,7 +38,17 @@ RSpec.describe "Handing a task to an agent" do
     rows = Nokogiri::HTML(response.body).css(".checklist__item")
     buttons = rows.to_h { |row| [ row.at_css(".checklist__title").text, row.css("button.btn").map(&:text) ] }
     expect(buttons["Fix the login bug"]).to eq([ "Complete on Claude ↗", "Complete on Codex ↗" ])
-    expect(buttons["Review Claude: tests"]).to be_empty
+    expect(buttons["tests"]).to be_empty
+  end
+
+  it "leads an agent's or Slack's task with its logo instead of the review prefix" do
+    create(:task, team: tenant.team, title: "Review Codex: tests", source: "codex")
+    create(:task, team: tenant.team, title: "Read the thread", source: "slack")
+
+    get dashboard_path
+
+    titles = Nokogiri::HTML(response.body).css(".checklist__title").to_h { |title| [ title.text, title.at_css(".source-logo svg").present? ] }
+    expect(titles).to eq("tests" => true, "Read the thread" => true, "Fix the login bug" => false)
   end
 
   # The redirect leaves this app for a custom scheme, so only the two links the

@@ -1,6 +1,6 @@
-<% content_for :title, @task.title %>
+<% content_for :title, @task.headline %>
 
-<%= page_title @task.title, description: @task.done? ? "Done. In the jar." : "Still to do." do %>
+<%= page_title @task.headline, description: @task.done? ? "Done. In the jar." : "Still to do." do %>
   <% if policy(@task).complete? %>
     <% if @task.done? %>
       <%= button_to "Put it back on the list", task_completion_path(@task), method: :delete, class: "btn",

@@ -381,6 +381,20 @@ summary.checklist__summary:hover .checklist__title,
   white-space: nowrap;
 }
 
+// The logo that leads a title from Claude, Codex or Slack. Sized in em, so it
+// is as tall as the capitals of whatever title it sits in.
+.source-logo {
+  display: inline-block;
+  margin-inline-end: 0.35em;
+  vertical-align: -0.1em;
+
+  svg {
+    display: block;
+    width: 0.9em;
+    height: 0.9em;
+  }
+}
+
 // --- Empty states ------------------------------------------------------------
 
 .checklist-empty {

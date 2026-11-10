@@ -106,6 +106,23 @@ module TasksHelper
     link_to label || "Open ↗", task.link, class: css, target: "_blank", rel: "noopener noreferrer", **options
   end
 
+  # The sources whose logo leads a task's title. Codex wears OpenAI's. The
+  # files come from thesvg.org and are ours, so they are safe to inline, and
+  # inline is what lets OpenAI's black mark take the text colour in dark mode.
+  SOURCE_LOGOS = %w[claude codex slack].index_with { |source|
+    Rails.root.join("app/assets/images/sources/#{source}.svg").read.strip.html_safe
+  }.freeze
+
+  # A task's title, led by its source's logo where it has one. The logo is
+  # decoration: the source column already names it, so it says nothing to a
+  # screen reader.
+  def task_title(task)
+    logo = SOURCE_LOGOS[task.source]
+    return task.headline unless logo
+
+    safe_join([ tag.span(logo, class: "source-logo"), task.headline ])
+  end
+
   # Where the work came from, in plain words. Colour belongs to the project.
   # A task handed to an agent says who has it until the agent reports back.
   def source_badge(task)

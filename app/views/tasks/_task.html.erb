@@ -25,7 +25,7 @@
   <details class="checklist__details">
     <summary class="checklist__summary">
       <%= project_badge(task) %>
-      <span class="checklist__title"><%= task.title %></span>
+      <span class="checklist__title"><%= task_title(task) %></span>
       <span class="checklist__from"><%= source_badge(task) %></span>
       <%= task_age(task) %>
     </summary>

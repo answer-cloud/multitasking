@@ -70,6 +70,11 @@ class Task < ApplicationRecord
   # The agents a task can be handed to from its row. See #agent_link.
   AGENTS = %w[claude codex].freeze
 
+  # What script/agent-hook puts in front of a finished session's title. The
+  # list shows the agent's logo there instead; see TasksHelper#task_title.
+  # "Claude needs you:" stays, because it says something the logo cannot.
+  REVIEW_PREFIX = /\AReview (?:Claude|Codex): /
+
   # Long enough for a whole first prompt from an agent session, which is
   # what its task is called. The list shows titles in full, never cut.
   TITLE_LIMIT = 2_000
@@ -133,6 +138,9 @@ class Task < ApplicationRecord
   def quiet? = !done? && last_activity_at < QUIET_AFTER.ago
 
   def source_label = SOURCES.fetch(source, source.humanize)
+
+  # The title as the list shows it: without the hook's "Review Claude: ".
+  def headline = title.sub(REVIEW_PREFIX, "")
 
   # The url, but only if it is a web link or an app link — what a view may put
   # in an href. Validation already refuses anything else; this is the second

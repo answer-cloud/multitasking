@@ -25,7 +25,7 @@
         <tbody>
           <% @tasks.each do |task| %>
             <tr id="<%= dom_id(task) %>">
-              <td><%= link_to task.title, task, class: "table__primary" %></td>
+              <td><%= link_to task_title(task), task, class: "table__primary" %></td>
               <td><%= source_badge(task) %></td>
               <td class="is-numeric quiet">
                 <%= tag.time(short_age(task.last_activity_at), datetime: task.last_activity_at.iso8601,
@@ -51,7 +51,7 @@
         <tbody>
           <% @done.each do |task| %>
             <tr id="<%= dom_id(task, :done) %>">
-              <td><%= link_to task.title, task, class: "table__primary is-done" %></td>
+              <td><%= link_to task_title(task), task, class: "table__primary is-done" %></td>
               <td><%= source_badge(task) %></td>
               <td class="is-numeric quiet"><%= short_datetime(task.completed_at) %></td>
             </tr>
