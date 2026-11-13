@@ -17,12 +17,14 @@
 
     <section class="stack">
       <h2>2. Claude Code</h2>
-      <p class="muted">Add this to <code>~/.claude/settings.json</code>. <code>Stop</code> fires when Claude finishes a turn; <code>Notification</code> fires when it is waiting on you.</p>
+      <p class="muted">Add this to <code>~/.claude/settings.json</code>. <code>Stop</code> fires when Claude finishes a turn; <code>Notification</code> fires when it is waiting on you; <code>PreToolUse</code> fires when it stops mid-turn to ask you a question.</p>
       <div data-controller="clipboard">
         <pre data-clipboard-target="source"><%= JSON.pretty_generate(
               "hooks" => {
                 "Stop" => [ { "hooks" => [ { "type" => "command", "command" => "#{hook} claude" } ] } ],
-                "Notification" => [ { "hooks" => [ { "type" => "command", "command" => "#{hook} claude" } ] } ]
+                "Notification" => [ { "hooks" => [ { "type" => "command", "command" => "#{hook} claude" } ] } ],
+                "PreToolUse" => [ { "matcher" => "AskUserQuestion|ExitPlanMode",
+                                    "hooks" => [ { "type" => "command", "command" => "#{hook} claude" } ] } ]
               }
             ) %></pre>
         <button type="button" class="btn btn--sm" data-clipboard-target="button" data-action="clipboard#copy">Copy</button>
