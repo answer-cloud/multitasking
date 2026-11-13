@@ -4,7 +4,8 @@
 # Sends a task to the Multitasking inbox when Claude Code or Codex finishes a
 # turn or needs you.
 #
-#   Claude Code (~/.claude/settings.json), on Stop and Notification:
+#   Claude Code (~/.claude/settings.json), on Stop, Notification, and
+#   PreToolUse for AskUserQuestion and ExitPlanMode:
 #     script/agent-hook claude          # hook JSON arrives on stdin
 #
 #   Codex (~/.codex/config.toml):
@@ -141,13 +142,36 @@ def codex_link(thread_id)
   "codex://threads/#{thread_id}" if thread_id.to_s.match?(/\A[\w-]+\z/)
 end
 
+# The tools Claude uses to stop and ask you something mid-turn. The turn is
+# not over, so Stop does not fire, and the desktop app does not always send a
+# Notification either. PreToolUse on these is the only sure sign.
+QUESTION_TOOLS = %w[AskUserQuestion ExitPlanMode].freeze
+
+# Why the session pinged, for the top of the task's notes: what Claude is
+# asking, or what Claude Code's notification said.
+def alert(input)
+  case input["tool_name"]
+  when "AskUserQuestion"
+    Array(input.dig("tool_input", "questions")).map { |item| item.is_a?(Hash) ? item["question"] : item }.compact.join("\n")
+  when "ExitPlanMode"
+    "Claude has a plan for you to approve."
+  else
+    input["message"]
+  end
+end
+
 def claude_task(input)
+  event = input["hook_event_name"]
+  # A PreToolUse hook set up too broadly fires before every tool; only a
+  # question means Claude is waiting.
+  return if event == "PreToolUse" && !QUESTION_TOOLS.include?(input["tool_name"])
+
   project = project_name(input["cwd"])
   entries = transcript_entries(input["transcript_path"])
   prompt = first_prompt(entries)
   asked = without_pastes(prompt)
   topic = session_title(entries) || (asked.empty? ? "session in #{project}" : summary(asked))
-  waiting = input["hook_event_name"] == "Notification"
+  waiting = %w[Notification PreToolUse].include?(event)
 
   {
     source: "claude",
@@ -156,7 +180,7 @@ def claude_task(input)
     url: claude_link,
     directory: repository(input["cwd"]),
     prompt: one_line(prompt),
-    notes: notes(input["message"], last_reply(input, entries), asked, input["cwd"])
+    notes: notes(alert(input), last_reply(input, entries), asked, input["cwd"])
   }
 end
 

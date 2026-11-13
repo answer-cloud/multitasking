@@ -13,6 +13,7 @@ RSpec.describe "Connections" do
     expect(response.body).to include(tenant.team.inbox_token)
     expect(response.body).to include(agent_hook_url)
     expect(response.body).to include("~/.config/multitasking/agent-hook claude")
+    expect(response.body).to include("AskUserQuestion|ExitPlanMode")
     expect(response.body).not_to include(Rails.root.to_s)
   end
 
