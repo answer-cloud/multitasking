@@ -10,6 +10,8 @@
   <div class="dropdown__menu" data-dropdown-target="menu" hidden>
     <%= link_to "To do", dashboard_path, class: "dropdown__item",
           "aria-current": current_page?(dashboard_path) ? "page" : nil %>
+    <%= link_to "Team", people_path, class: "dropdown__item",
+          "aria-current": controller_name == "people" ? "page" : nil %>
     <%= link_to "Done pile", tasks_path, class: "dropdown__item",
           "aria-current": controller_name == "tasks" ? "page" : nil %>
     <%= link_to "Projects", projects_path, class: "dropdown__item",

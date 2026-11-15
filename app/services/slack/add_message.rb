@@ -83,7 +83,8 @@ module Slack
         notes: (text.strip.first(10_000) unless text.squish == title),
         url: permalink,
         project: @project,
-        created_by: @connection.user
+        created_by: @connection.user,
+        assignee: @connection.user
       )
     end
 

@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe "Filing a task under a project" do
   let(:tenant) { create_tenant }
-  let!(:task) { create(:task, :quiet, team: tenant.team) }
+  let!(:task) { create(:task, :quiet, team: tenant.team, assignee: tenant.member) }
   let!(:project) { create(:project, team: tenant.team, name: "Storefront") }
 
   before { sign_in tenant.member }

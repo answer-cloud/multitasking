@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-# The task list. The dashboard shows what is still to do; this index is the
-# done pile, searchable, paged and grouped by day, so finished work is never
-# truly gone. The month's chart and each day's summary sit on top of it.
+# The task list. The dashboard shows what is still to do; this index is your
+# own done pile, searchable, paged and grouped by day, so finished work is
+# never truly gone. The month's chart and each day's summary sit on top of it.
 class TasksController < ApplicationController
   before_action :set_task, only: %i[show edit update destroy]
 
   def index
-    done = policy_scope(scoped_tasks.done.search(params[:q]))
+    done = policy_scope(scoped_tasks).assigned_to(Current.user).done.search(params[:q])
     @days = done.days_done
     @day = day
     @page = paginate(done.done_on(@day).recently_done)
@@ -26,13 +26,15 @@ class TasksController < ApplicationController
     @task = scoped_tasks.new(
       title: (params[:title].presence || params[:url]).to_s.squish.first(Task::TITLE_LIMIT),
       url: params[:url].to_s.first(2_000).presence,
-      source: "tab"
+      source: "tab",
+      assignee: Current.user
     )
     authorize @task
   end
 
-  # Quick add, from the box at the top of the dashboard. Typed or spoken, it
-  # lands here; the `source` says which. A pasted Slack link brings in the
+  # Quick add, from the box at the top of a list. Typed or spoken, it lands
+  # here; the `source` says which. On a colleague's list the form names them,
+  # and the task is theirs; otherwise it is yours. A pasted Slack link brings in the
   # message it points at — see #add_from_slack.
   def create
     @task = build_quick_add_task
@@ -42,7 +44,7 @@ class TasksController < ApplicationController
     if @task.persisted? || @task.save
       respond_to do |format|
         format.turbo_stream
-        format.html { redirect_to dashboard_path, notice: "Added." }
+        format.html { redirect_to list_path, notice: "Added." }
       end
     else
       respond_to do |format|
@@ -60,7 +62,7 @@ class TasksController < ApplicationController
     authorize @task
 
     if @task.update(task_params.merge(last_activity_at: Time.current))
-      redirect_to dashboard_path, notice: "Task updated."
+      redirect_to list_path, notice: "Task updated."
     else
       render :edit, status: :unprocessable_content
     end
@@ -79,7 +81,16 @@ class TasksController < ApplicationController
   def scoped_tasks = current_team.tasks
 
   def set_task
-    @task = scoped_tasks.find(params[:id])
+    @task = policy_scope(scoped_tasks).find(params[:id])
+  end
+
+  # Back to the list the task is on: yours, a colleague's, or — for one with
+  # nobody on it — the team page, where those wait.
+  def list_path
+    return dashboard_path if @task.assignee == Current.user
+
+    membership = current_team.memberships.find_by(user: @task.assignee) if @task.assignee
+    membership ? person_path(membership) : people_path
   end
 
   # The day picked on the done pile, or nil for every day. A day that is not a
@@ -98,7 +109,7 @@ class TasksController < ApplicationController
   # its blocks stack in — and the best day ever, which tops the scale. The
   # chart ignores the search: it is the whole month.
   def set_month_chart
-    done = policy_scope(scoped_tasks.done)
+    done = policy_scope(scoped_tasks).assigned_to(Current.user).done
     @month = Date.current.all_month
     @month_days = done.where(completed_at: @month.first.beginning_of_day..@month.last.end_of_day)
       .includes(:project).order(:completed_at)
@@ -109,6 +120,7 @@ class TasksController < ApplicationController
   def build_quick_add_task
     task = scoped_tasks.new(task_params)
     task.created_by = Current.user
+    task.assignee ||= Current.user
     task.source = "typed" unless task.source.in?(Task::IN_APP_SOURCES)
     file_under_leading_name(task)
     task
@@ -121,7 +133,7 @@ class TasksController < ApplicationController
   def file_under_leading_name(task)
     return if task.project || task.source == "tab"
 
-    project, rest = current_team.projects.leading(task.title)
+    project, rest = visible_projects.leading(task.title)
     return if project.nil?
 
     task.project = project
@@ -153,7 +165,7 @@ class TasksController < ApplicationController
     connection = current_team.slack_connections.find_by(user: Current.user) unless impersonating?
     return if connection.nil?
 
-    project = current_team.projects.find_by(id: project&.id)
+    project = visible_projects.find_by(id: project&.id)
     result = Slack::AddMessage.call(connection: connection, project: project, **link)
     result.value if result.success?
   rescue Slack::Api::Unavailable
@@ -161,6 +173,6 @@ class TasksController < ApplicationController
   end
 
   def task_params
-    params.expect(task: %i[title notes url source project_id])
+    params.expect(task: %i[title notes url source project_id assignee_id])
   end
 end

@@ -22,6 +22,8 @@ class ApplicationController < ActionController::Base
   # does not define — and most controllers here do not have every action.
   after_action :verify_pundit_usage, unless: :pundit_exempt?
 
+  helper_method :visible_projects
+
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
   rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
 
@@ -40,6 +42,12 @@ class ApplicationController < ActionController::Base
   end
 
   def pundit_user = Current.user
+
+  # The team's projects, less the ones kept to admins if you are not one.
+  # Every picker and every lookup by name starts here. The same rule as
+  # ProjectPolicy::Scope, asked directly: going through policy_scope would
+  # tick the box an index has to tick for itself.
+  def visible_projects = current_team.projects.visible_to(current_membership)
 
   def user_not_authorized
     respond_to do |format|

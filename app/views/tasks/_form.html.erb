@@ -12,8 +12,14 @@
 
   <div class="field">
     <%= form.label :project_id, "Project", class: "field__label" %>
-    <%= form.collection_select :project_id, current_team.projects.alphabetical, :id, :name,
+    <%= form.collection_select :project_id, visible_projects.alphabetical, :id, :name,
           { include_blank: Project::OTHER }, class: "select", "aria-invalid": task.errors.include?(:project) %>
+  </div>
+
+  <div class="field">
+    <%= form.label :assignee_id, "On whose list", class: "field__label" %>
+    <%= form.collection_select :assignee_id, current_team.users.order(:first_name, :email), :id, :name,
+          { include_blank: "Nobody yet" }, class: "select", "aria-invalid": task.errors.include?(:assignee) %>
   </div>
 
   <div class="field">

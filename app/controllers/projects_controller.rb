@@ -8,13 +8,13 @@ class ProjectsController < ApplicationController
 
   def index
     @projects = policy_scope(scoped_projects.alphabetical)
-    @open_counts = current_team.tasks.pending.group(:project_id).count
+    @open_counts = policy_scope(current_team.tasks).pending.group(:project_id).count
   end
 
   def show
     authorize @project
-    @tasks = @project.tasks.pending.in_order
-    @done = @project.tasks.done.recently_done
+    @tasks = @project.tasks.pending.in_order.includes(:assignee)
+    @done = @project.tasks.done.recently_done.includes(:assignee)
   end
 
   def new
@@ -57,8 +57,9 @@ class ProjectsController < ApplicationController
 
   private
 
-  # The one line that matters.
-  def scoped_projects = current_team.projects
+  # The one line that matters: the team's projects, then the policy scope, so
+  # one kept to admins is not found by anybody else.
+  def scoped_projects = policy_scope(current_team.projects)
 
   def set_project
     @project = scoped_projects.find(params[:id])

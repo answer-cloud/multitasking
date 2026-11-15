@@ -8,6 +8,7 @@ require "rails_helper"
 #
 #  id                 :bigint           not null, primary key
 #  hidden_project_ids :bigint           default([]), not null, is an Array
+#  inbox_token        :string           not null
 #  role               :integer          default(0), not null
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
@@ -16,6 +17,7 @@ require "rails_helper"
 #
 # Indexes
 #
+#  index_memberships_on_inbox_token          (inbox_token) UNIQUE
 #  index_memberships_on_team_id              (team_id)
 #  index_memberships_on_team_id_and_role     (team_id,role)
 #  index_memberships_on_user_id              (user_id)
@@ -113,6 +115,70 @@ RSpec.describe Membership do
 
       expect { membership.destroy }
         .to have_enqueued_job(Billing::SyncSeatsJob).with(team.id)
+    end
+  end
+
+  describe "finding somebody by what they are called" do
+    let(:team) { create(:team) }
+    let!(:sam) { create(:membership, team: team, user: create(:user, first_name: "Sam", last_name: "Lee", email: "sam@example.com")) }
+    let!(:alex) { create(:membership, team: team, user: create(:user, first_name: "Alex", last_name: "Okafor")) }
+
+    it "finds a person by first name, full name or email, ignoring case and spacing" do
+      expect(team.memberships.named("sam")).to eq(sam)
+      expect(team.memberships.named("  Sam   LEE ")).to eq(sam)
+      expect(team.memberships.named("SAM@example.com")).to eq(sam)
+    end
+
+    it "finds nobody for a blank or unknown name" do
+      expect(team.memberships.named("")).to be_nil
+      expect(team.memberships.named("Zebedee")).to be_nil
+    end
+
+    it "finds nobody when a first name is shared, and still finds each by full name" do
+      other_sam = create(:membership, team: team, user: create(:user, first_name: "Sam", last_name: "Okafor"))
+
+      expect(team.memberships.named("Sam")).to be_nil
+      expect(team.memberships.named("Sam Okafor")).to eq(other_sam)
+    end
+
+    it "only looks among the memberships it is asked through" do
+      expect(create(:team).memberships.named("Sam")).to be_nil
+    end
+  end
+
+  describe "leaving" do
+    let(:team) { create(:team) }
+    let(:leaver) { create(:membership, team: team) }
+
+    before { create(:membership, :owner, team: team) }
+
+    it "hands what the person still had to do back to the team, and keeps what they finished theirs" do
+      open_task = create(:task, team: team, assignee: leaver.user)
+      done_task = create(:task, :done, team: team, assignee: leaver.user)
+
+      leaver.destroy!
+
+      expect(open_task.reload.assignee).to be_nil
+      expect(done_task.reload.assignee).to eq(leaver.user)
+    end
+
+    it "leaves their tasks on other teams alone" do
+      elsewhere = create(:membership, user: leaver.user)
+      theirs = create(:task, team: elsewhere.team, assignee: leaver.user)
+
+      leaver.destroy!
+
+      expect(theirs.reload.assignee).to eq(leaver.user)
+    end
+  end
+
+  describe "the inbox token" do
+    it "gives each membership its own" do
+      one = create(:membership)
+      two = create(:membership)
+
+      expect(one.inbox_token).to be_present
+      expect(one.inbox_token).not_to eq(two.inbox_token)
     end
   end
 end

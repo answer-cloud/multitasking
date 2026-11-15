@@ -20,7 +20,7 @@ module Tasks
     private
 
     def set_task
-      @task = current_team.tasks.find(params[:task_id])
+      @task = policy_scope(current_team.tasks).find(params[:task_id])
     end
   end
 end

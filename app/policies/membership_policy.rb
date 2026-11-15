@@ -3,6 +3,10 @@
 class MembershipPolicy < ApplicationPolicy
   def index? = member?
 
+  # Each person's list is open to the whole team. What a list may not show
+  # somebody is decided task by task; see TaskPolicy::Scope.
+  def show? = member?
+
   # Roles are granted by admins, but only an owner may create another owner —
   # otherwise an admin could promote themselves past their own ceiling.
   def update?

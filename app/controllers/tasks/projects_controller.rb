@@ -22,14 +22,15 @@ module Tasks
     private
 
     def set_task
-      @task = current_team.tasks.find(params[:task_id])
+      @task = policy_scope(current_team.tasks).find(params[:task_id])
     end
 
-    # Looked up through the team, so another team's project is not found. A
-    # blank choice takes the task out of its project.
+    # Looked up through the team, so another team's project is not found —
+    # nor is one kept to admins, for anybody else. A blank choice takes the
+    # task out of its project.
     def chosen_project
       id = params.dig(:task, :project_id).presence
-      current_team.projects.find(id) if id
+      visible_projects.find(id) if id
     end
   end
 end

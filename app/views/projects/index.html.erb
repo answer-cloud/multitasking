@@ -21,10 +21,14 @@
           <tr>
             <td>
               <%= link_to project.name, project, class: "table__primary project-tag project-tag--#{project.color}" %>
+              <%= tag.span("Admins only", class: "badge badge--quiet") if project.admin_only? %>
               <span class="table__secondary"><%= short_directory(project) %></span>
             </td>
             <td class="is-numeric"><%= @open_counts.fetch(project.id, 0) %></td>
             <td class="is-actions">
+              <% if policy(project).restrict? %>
+                <%= render "projects/restriction_toggle", project: project %>
+              <% end %>
               <% if policy(project).hide? %>
                 <%= render "projects/hiding_toggle", project: project, hidden: current_membership.hidden?(project) %>
               <% end %>

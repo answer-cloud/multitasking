@@ -53,7 +53,10 @@ module Summaries
     private
 
     def tasks
-      @tasks ||= @team.tasks.done.where(completed_at: @day.in_time_zone(@team.zone).all_day)
+      # The note is shown to the whole team, so it is written from what the
+      # whole team may see: nothing filed under a project kept to admins.
+      @tasks ||= @team.tasks.done.outside(@team.projects.admin_only.ids)
+        .where(completed_at: @day.in_time_zone(@team.zone).all_day)
         .includes(:project).order(:completed_at).to_a
     end
 

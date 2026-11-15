@@ -32,12 +32,13 @@ module Tasks
     private
 
     def set_task
-      @task = current_team.tasks.find(params[:task_id])
+      @task = policy_scope(current_team.tasks).find(params[:task_id])
     end
 
-    # The stream redraws the whole done list, newest first.
+    # The stream redraws the whole done list, newest first: the one on the
+    # list the task was ticked on, which is its assignee's.
     def done_today
-      policy_scope(current_team.tasks.done_today.recently_done.includes(:project))
+      policy_scope(current_team.tasks).assigned_to(@task.assignee).done_today.recently_done.includes(:project)
     end
   end
 end

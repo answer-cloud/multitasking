@@ -11,12 +11,18 @@
 #   Codex (~/.codex/config.toml):
 #     notify = ["/path/to/script/agent-hook", "codex"]   # JSON arrives as the last argument
 #
+#   Putting a task on somebody's list, from a terminal or from Claude (see
+#   script/assign-skill.md):
+#     script/agent-hook assign "Sam" "Fix the navbar" [--project Slater] [--notes "…"]
+#
 # Reads `url=` and `token=` from ~/.config/multitasking/config, or from
 # MULTITASKING_URL and MULTITASKING_TOKEN.
 #
 # Runs on the Ruby 2.6 that ships with macOS, so it needs nothing installed.
-# Stdlib only, and it always exits 0: a hook that fails or hangs would get in
-# the way of the agent it is meant to be watching.
+# Stdlib only, and as a hook it always exits 0: a hook that fails or hangs
+# would get in the way of the agent it is meant to be watching. `assign` is
+# the exception — somebody asked for it and is waiting to hear, so it says
+# what happened and fails out loud.
 
 require "json"
 require "net/http"
@@ -269,6 +275,43 @@ def deliver(task, settings)
   Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 2, read_timeout: 3) do |http|
     http.request(request)
   end
+end
+
+# `assign <person> <task> [--project NAME] [--notes TEXT]`. "me" is the
+# token's own list, which is what the inbox does when no one is named.
+def assignment(arguments)
+  options = {}
+  words = []
+  arguments = arguments.dup
+  while (argument = arguments.shift)
+    case argument
+    when "--project" then options[:project] = arguments.shift
+    when "--notes" then options[:notes] = arguments.shift
+    else words << argument
+    end
+  end
+
+  person, *title = words
+  abort 'Usage: agent-hook assign "<person>" "<task>" [--project "<project>"] [--notes "<notes>"]' if title.empty?
+
+  { source: "claude", title: one_line(title.join(" ")), assignee: (person unless person.casecmp("me").zero?) }.merge(options)
+end
+
+def assign(arguments, settings)
+  abort "No token. Install the hook from the Connect agents page first." if settings[:token].to_s.empty?
+
+  response = deliver(assignment(arguments), settings)
+  body = JSON.parse(response.body.to_s) rescue {}
+  abort(Array(body["errors"]).join(" ").then { |why| why.empty? ? "Could not add the task (#{response.code})." : why }) unless response.is_a?(Net::HTTPSuccess)
+
+  puts "Added to #{body["assignee"] || "the team"}’s list."
+rescue SystemCallError, SocketError, Timeout::Error => e
+  abort "Could not reach #{settings[:url]}: #{e.message}"
+end
+
+if ARGV.first == "assign"
+  assign(ARGV.drop(1), config)
+  exit 0
 end
 
 begin

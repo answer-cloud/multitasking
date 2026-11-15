@@ -5,6 +5,7 @@
 # Table name: projects
 #
 #  id            :bigint           not null, primary key
+#  admin_only    :boolean          default(FALSE), not null
 #  aliases       :string           default([]), not null, is an Array
 #  color         :string
 #  directory     :string

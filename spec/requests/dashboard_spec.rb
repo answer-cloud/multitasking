@@ -29,9 +29,9 @@ RSpec.describe "Dashboard" do
 
   it "shows what is left to do and what went in the jar today" do
     tenant = create_tenant
-    create(:task, team: tenant.team, title: "Still to do")
-    create(:task, :done, team: tenant.team, title: "Finished today")
-    create(:task, team: tenant.team, completed_at: 2.days.ago, title: "Finished last week")
+    create(:task, team: tenant.team, assignee: tenant.owner, title: "Still to do")
+    create(:task, :done, team: tenant.team, assignee: tenant.owner, title: "Finished today")
+    create(:task, team: tenant.team, assignee: tenant.owner, completed_at: 2.days.ago, title: "Finished last week")
     sign_in tenant.owner
 
     get dashboard_path
@@ -55,7 +55,7 @@ RSpec.describe "Dashboard" do
 
   it "shows one list you can drag, by task, unless asked otherwise" do
     tenant = create_tenant
-    create(:task, team: tenant.team, title: "Loose end")
+    create(:task, team: tenant.team, assignee: tenant.owner, title: "Loose end")
     sign_in tenant.owner
 
     get dashboard_path
@@ -70,10 +70,10 @@ RSpec.describe "Dashboard" do
     tenant = create_tenant
     zoo = create(:project, team: tenant.team, name: "Zoo")
     api = create(:project, team: tenant.team, name: "api")
-    create(:task, team: tenant.team, title: "Loose end")
-    create(:task, team: tenant.team, project: zoo, title: "Feed the lions")
-    create(:task, team: tenant.team, project: api, title: "Ship the endpoint")
-    create(:task, team: tenant.team, project: api, title: "Write the docs")
+    create(:task, team: tenant.team, assignee: tenant.owner, title: "Loose end")
+    create(:task, team: tenant.team, assignee: tenant.owner, project: zoo, title: "Feed the lions")
+    create(:task, team: tenant.team, assignee: tenant.owner, project: api, title: "Ship the endpoint")
+    create(:task, team: tenant.team, assignee: tenant.owner, project: api, title: "Write the docs")
     sign_in tenant.owner
 
     get dashboard_path(view: "projects")
@@ -91,7 +91,7 @@ RSpec.describe "Dashboard" do
 
   it "remembers the view you picked, and ignores one it does not know" do
     tenant = create_tenant
-    create(:task, team: tenant.team)
+    create(:task, team: tenant.team, assignee: tenant.owner)
     sign_in tenant.owner
 
     get dashboard_path(view: "projects")
@@ -121,9 +121,9 @@ RSpec.describe "Dashboard" do
     # Midday, so two hours ago is still today.
     travel_to Time.utc(2026, 10, 29, 12, 0) do
       tenant = create_tenant
-      create(:task, :done, team: tenant.team, title: "Earlier", completed_at: 2.hours.ago,
+      create(:task, :done, team: tenant.team, assignee: tenant.owner, title: "Earlier", completed_at: 2.hours.ago,
         project: create(:project, team: tenant.team, name: "Zoo"))
-      create(:task, :done, team: tenant.team, title: "Later", completed_at: 1.hour.ago)
+      create(:task, :done, team: tenant.team, assignee: tenant.owner, title: "Later", completed_at: 1.hour.ago)
       sign_in tenant.owner
 
       get dashboard_path
@@ -136,7 +136,7 @@ RSpec.describe "Dashboard" do
 
   it "links a pushed task back to its conversation in the agent's app" do
     tenant = create_tenant
-    create(:task, team: tenant.team, source: "claude", url: "claude://code/continue?session=local_abc-123")
+    create(:task, team: tenant.team, assignee: tenant.owner, source: "claude", url: "claude://code/continue?session=local_abc-123")
     sign_in tenant.owner
 
     get dashboard_path
@@ -148,10 +148,10 @@ RSpec.describe "Dashboard" do
   it "sends a click on a project back to where its latest linked task came from" do
     tenant = create_tenant
     project = create(:project, team: tenant.team, name: "Api", directory: "/code/api")
-    create(:task, team: tenant.team, project: project, url: "https://github.com/acme/api/pull/1", last_activity_at: 1.day.ago)
-    create(:task, team: tenant.team, project: project, source: "claude",
+    create(:task, team: tenant.team, assignee: tenant.owner, project: project, url: "https://github.com/acme/api/pull/1", last_activity_at: 1.day.ago)
+    create(:task, team: tenant.team, assignee: tenant.owner, project: project, source: "claude",
       url: "claude://code/continue?session=local_latest", last_activity_at: 1.hour.ago)
-    create(:task, team: tenant.team, project: project, source: "voice", last_activity_at: 1.minute.ago)
+    create(:task, team: tenant.team, assignee: tenant.owner, project: project, source: "voice", last_activity_at: 1.minute.ago)
     sign_in tenant.owner
 
     get dashboard_path
@@ -163,7 +163,7 @@ RSpec.describe "Dashboard" do
   it "opens a web link from a project in a new tab, like the task's own button" do
     tenant = create_tenant
     project = create(:project, team: tenant.team, name: "Site")
-    create(:task, team: tenant.team, project: project, url: "https://example.com/brief")
+    create(:task, team: tenant.team, assignee: tenant.owner, project: project, url: "https://example.com/brief")
     sign_in tenant.owner
 
     get dashboard_path
@@ -174,7 +174,7 @@ RSpec.describe "Dashboard" do
   it "leaves a project with no linked tasks as plain text" do
     tenant = create_tenant
     project = create(:project, team: tenant.team, name: "Api", directory: "/code/api")
-    create(:task, team: tenant.team, project: project)
+    create(:task, team: tenant.team, assignee: tenant.owner, project: project)
     sign_in tenant.owner
 
     get dashboard_path
@@ -185,13 +185,13 @@ RSpec.describe "Dashboard" do
 
   it "puts today's done count where the brand was" do
     tenant = create_tenant
-    create(:task, :done, team: tenant.team)
-    create(:task, team: tenant.team, completed_at: 2.days.ago)
+    create(:task, :done, team: tenant.team, assignee: tenant.owner)
+    create(:task, team: tenant.team, assignee: tenant.owner, completed_at: 2.days.ago)
     sign_in tenant.owner
 
     get dashboard_path
 
-    expect(response.body).to include(%(Done <span class="tally numeric" data-done-count>1</span>))
+    expect(response.body).to include(%(Done <span class="tally numeric" data-done-count="#{tenant.owner.id}">1</span>))
   end
 
   it "names the talk shortcut the way the keyboard does" do
@@ -207,7 +207,7 @@ RSpec.describe "Dashboard" do
 
   it "tells the time in the browser's time zone, not the server's" do
     tenant = create_tenant
-    create(:task, team: tenant.team, title: "Early start", completed_at: Time.utc(2026, 10, 29, 19, 30))
+    create(:task, team: tenant.team, assignee: tenant.owner, title: "Early start", completed_at: Time.utc(2026, 10, 29, 19, 30))
     sign_in tenant.owner
     cookies[:time_zone] = "Pacific/Auckland"
 

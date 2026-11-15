@@ -6,6 +6,7 @@
 #
 #  id                 :bigint           not null, primary key
 #  hidden_project_ids :bigint           default([]), not null, is an Array
+#  inbox_token        :string           not null
 #  role               :integer          default(0), not null
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
@@ -14,6 +15,7 @@
 #
 # Indexes
 #
+#  index_memberships_on_inbox_token          (inbox_token) UNIQUE
 #  index_memberships_on_team_id              (team_id)
 #  index_memberships_on_team_id_and_role     (team_id,role)
 #  index_memberships_on_user_id              (user_id)

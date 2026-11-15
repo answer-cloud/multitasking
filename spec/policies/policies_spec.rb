@@ -136,6 +136,26 @@ RSpec.describe "Policies" do
         expect(as(outsider, task, question)).to be(false)
       end
     end
+
+    describe "scope" do
+      let!(:open_task) { create(:task, team: team) }
+      let!(:kept_task) { create(:task, team: team, project: create(:project, team: team, admin_only: true)) }
+
+      def tasks_for(user) = acting_as(user, team: team) { TaskPolicy::Scope.new(user, team.tasks).resolve.to_a }
+
+      it "shows an owner and an admin every task" do
+        expect(tasks_for(owner)).to contain_exactly(open_task, kept_task)
+        expect(tasks_for(admin)).to contain_exactly(open_task, kept_task)
+      end
+
+      it "shows a member nothing filed under a project kept to admins, and still shows unfiled tasks" do
+        expect(tasks_for(member)).to contain_exactly(open_task)
+      end
+
+      it "shows a non-member nothing" do
+        expect(tasks_for(outsider)).to be_empty
+      end
+    end
   end
 
   describe DailySummaryPolicy do
@@ -182,8 +202,38 @@ RSpec.describe "Policies" do
     end
 
     it "refuses everything to a non-member" do
-      %i[show? create? update? destroy? hide?].each do |question|
+      %i[show? create? update? destroy? hide? restrict?].each do |question|
         expect(as(outsider, project, question)).to be(false)
+      end
+    end
+
+    it "lets an owner and an admin keep a project to admins" do
+      expect(as(owner, project, :restrict?)).to be(true)
+      expect(as(admin, project, :restrict?)).to be(true)
+    end
+
+    it "does not let a member keep a project to admins" do
+      expect(as(member, project, :restrict?)).to be(false)
+    end
+
+    describe "scope" do
+      let!(:kept) { create(:project, team: team, admin_only: true) }
+
+      before { project }
+
+      def projects_for(user) = acting_as(user, team: team) { ProjectPolicy::Scope.new(user, team.projects).resolve.to_a }
+
+      it "shows an owner and an admin every project" do
+        expect(projects_for(owner)).to contain_exactly(project, kept)
+        expect(projects_for(admin)).to contain_exactly(project, kept)
+      end
+
+      it "shows a member only the projects shared with the team" do
+        expect(projects_for(member)).to contain_exactly(project)
+      end
+
+      it "shows a non-member nothing" do
+        expect(projects_for(outsider)).to be_empty
       end
     end
   end

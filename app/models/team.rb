@@ -5,7 +5,6 @@
 # Table name: teams
 #
 #  id                 :bigint           not null, primary key
-#  inbox_token        :string           not null
 #  name               :string           not null
 #  slug               :string           not null
 #  time_zone          :string           default("UTC"), not null
@@ -15,7 +14,6 @@
 #
 # Indexes
 #
-#  index_teams_on_inbox_token         (inbox_token) UNIQUE
 #  index_teams_on_slug                (slug) UNIQUE
 #  index_teams_on_stripe_customer_id  (stripe_customer_id) UNIQUE
 #
@@ -38,9 +36,6 @@ class Team < ApplicationRecord
                      message: "may only contain lowercase letters, numbers and hyphens"
                    }
   validate :time_zone_exists
-
-  # The secret in the address a hook posts tasks to. See Inbox::TasksController.
-  has_secure_token :inbox_token
 
   before_validation :generate_slug, on: :create
 

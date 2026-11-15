@@ -73,6 +73,11 @@ module TasksHelper
   # row back asks this, so a priority task never lands in the rest.
   def task_list_id(task) = task.priority? ? "priorities" : "tasks"
 
+  # The tallies of what one person finished today — the one in the masthead,
+  # the one over their jar — are marked with whose they are, so a stream about
+  # a colleague's list never moves your own number.
+  def done_count_selector(user) = %([data-done-count="#{user&.id}"])
+
   def greeting(user)
     hour = Time.current.hour
     part = if hour < 5 then "Burning the midnight oil"
@@ -82,6 +87,18 @@ module TasksHelper
     end
 
     "#{part}, #{user.first_name.presence || "friend"}."
+  end
+
+  # What a list is called: "To do" when it is yours, the person's name when
+  # it is a colleague's.
+  def list_title(person) = person == Current.user ? "To do" : "#{person.first_name.presence || person.name}’s list"
+
+  # The line beside the title: a greeting on your own list, the plain count
+  # on a colleague's.
+  def list_summary(person, pending, done)
+    return "#{greeting(person)} #{plate_summary(pending, done)}" if person == Current.user
+
+    "#{pluralize(pending, "thing")} to do, #{done} done today. Add one above and it is theirs."
   end
 
   # The line under the greeting. It reads the room.

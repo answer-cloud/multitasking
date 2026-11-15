@@ -34,6 +34,8 @@
       <dd><%= source_badge(@task) %></dd>
       <dt>Project</dt>
       <dd><%= @task.project ? link_to(@task.project.name, @task.project) : Project::OTHER %></dd>
+      <dt>On whose list</dt>
+      <dd><%= @task.assignee&.name || "Nobody yet" %></dd>
       <dt>Added by</dt>
       <dd><%= @task.created_by&.name || "—" %></dd>
       <dt>Added</dt>

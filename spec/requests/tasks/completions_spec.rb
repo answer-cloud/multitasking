@@ -6,7 +6,7 @@ RSpec.describe "Task completions" do
   include ActiveSupport::Testing::TimeHelpers
 
   let(:tenant) { create_tenant }
-  let!(:task) { create(:task, team: tenant.team) }
+  let!(:task) { create(:task, team: tenant.team, assignee: tenant.member) }
 
   before { sign_in tenant.member }
 
@@ -21,7 +21,7 @@ RSpec.describe "Task completions" do
 
     it "files it in the jar under its project, or Other" do
       task.update!(project: create(:project, team: tenant.team, name: "Storefront"))
-      create(:task, :done, team: tenant.team, title: "Unfiled")
+      create(:task, :done, team: tenant.team, assignee: tenant.member, title: "Unfiled")
 
       post task_completion_path(task), as: :turbo_stream
 

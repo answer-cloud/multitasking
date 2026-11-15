@@ -4,7 +4,8 @@ require "rails_helper"
 
 RSpec.describe "Inbox: tasks pushed in by other tools" do
   let(:tenant) { create_tenant }
-  let(:headers) { { "Authorization" => "Bearer #{tenant.team.inbox_token}" } }
+  let(:membership) { tenant.member.membership_for(tenant.team) }
+  let(:headers) { { "Authorization" => "Bearer #{membership.inbox_token}" } }
 
   def push(params, with: headers)
     post inbox_tasks_path, params: params, headers: with, as: :json
@@ -202,6 +203,101 @@ RSpec.describe "Inbox: tasks pushed in by other tools" do
 
       expect(theirs.reload.external_id).to be_nil
       expect(task.reload.external_id).to eq("session-1")
+    end
+  end
+
+  describe "whose list it lands on" do
+    it "puts a task on the list of whoever's token it was" do
+      push({ title: "Review Claude: dark mode" })
+
+      expect(tenant.team.tasks.last).to have_attributes(assignee: tenant.member, created_by: tenant.member)
+    end
+
+    it "puts it on a colleague's list when they are named" do
+      tenant.owner.update!(first_name: "Sam", last_name: "Lee")
+
+      push({ title: "Fix the navbar", assignee: "sam" })
+
+      expect(response).to have_http_status(:created)
+      expect(response.parsed_body["assignee"]).to eq("Sam Lee")
+      expect(tenant.team.tasks.last).to have_attributes(assignee: tenant.owner, created_by: tenant.member)
+    end
+
+    it "finds a colleague by full name or by email, whatever the case" do
+      tenant.owner.update!(first_name: "Sam", last_name: "Lee")
+
+      push({ title: "By name", assignee: "SAM LEE" })
+      push({ title: "By email", assignee: tenant.owner.email.upcase })
+
+      expect(tenant.team.tasks.where(assignee: tenant.owner).pluck(:title)).to contain_exactly("By name", "By email")
+    end
+
+    it "refuses a name nobody on the team has, and says who is on it" do
+      push({ title: "Lost", assignee: "Zebedee" })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body["errors"].first).to include("Zebedee", tenant.owner.name, tenant.member.name)
+      expect(Task.count).to eq(0)
+    end
+
+    # Guessing between two Sams would put somebody's task on the wrong list.
+    it "refuses a first name two people share, rather than guessing" do
+      tenant.owner.update!(first_name: "Sam", last_name: "Lee")
+      tenant.member.update!(first_name: "Sam", last_name: "Okafor")
+
+      push({ title: "Which Sam?", assignee: "Sam" })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(Task.count).to eq(0)
+    end
+
+    # The name is looked up through the token's team. Somebody on another
+    # team is nobody here, even by their exact email.
+    it "never assigns to somebody on another team" do
+      other = create_tenant
+
+      push({ title: "Smuggled", assignee: other.member.email })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(Task.count).to eq(0)
+    end
+
+    it "leaves a session's task on the list it is on when it pings again" do
+      push({ title: "Review Claude: one", source: "claude", external_id: "sess_1" })
+      task = tenant.team.tasks.last
+      task.update!(assignee: tenant.owner)
+
+      push({ title: "Review Claude: one", source: "claude", external_id: "sess_1" })
+
+      expect(task.reload.assignee).to eq(tenant.owner)
+    end
+
+    it "files it under a project named in the request" do
+      slater = create(:project, team: tenant.team, name: "Slater Suite")
+
+      push({ title: "Fix the navbar", project: "slater-suite" })
+
+      expect(tenant.team.tasks.last.project).to eq(slater)
+    end
+  end
+
+  describe "projects kept to admins" do
+    let!(:hiring) { create(:project, team: tenant.team, name: "Hiring", directory: "/code/hiring", admin_only: true) }
+
+    it "does not file a member's task under one, by name or by folder" do
+      push({ title: "By name", project: "Hiring" })
+      push({ title: "By folder", directory: "/code/hiring" })
+
+      expect(tenant.team.tasks.pluck(:project_id)).to eq([ nil, nil ])
+      expect(tenant.team.projects.count).to eq(1)
+    end
+
+    it "files an owner's task under one" do
+      owners = { "Authorization" => "Bearer #{tenant.owner.membership_for(tenant.team).inbox_token}" }
+
+      push({ title: "By folder", directory: "/code/hiring" }, with: owners)
+
+      expect(tenant.team.tasks.last.project).to eq(hiring)
     end
   end
 end

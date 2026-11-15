@@ -6,6 +6,8 @@
               action: "turbo:submit-end->quick-add#reset keydown@document->quick-add#shortcut" } do |form| %>
   <div class="quick-add__row">
     <%= form.hidden_field :source, value: "typed", data: { quick_add_target: "source" } %>
+    <%# Whose list the box sits on. Left out on your own: a task is yours unless it says otherwise. %>
+    <%= form.hidden_field :assignee_id if task.assignee && task.assignee != Current.user %>
     <%= form.label :title, "What needs doing?", class: "visually-hidden" %>
     <%= form.text_field :title, class: "input quick-add__input", placeholder: quick_add_placeholder,
           autocomplete: "off", autofocus: true, maxlength: Task::TITLE_LIMIT, required: true,

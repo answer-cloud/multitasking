@@ -5,12 +5,13 @@ require "rails_helper"
 RSpec.describe "Connections" do
   let(:tenant) { create_tenant }
 
-  it "shows any member the team's inbox token and the hook setup" do
+  it "shows a member their own inbox token and the hook setup, and nobody else's token" do
     sign_in tenant.member
 
     get connection_path
 
-    expect(response.body).to include(tenant.team.inbox_token)
+    expect(response.body).to include(tenant.member.membership_for(tenant.team).inbox_token)
+    expect(response.body).not_to include(tenant.owner.membership_for(tenant.team).inbox_token)
     expect(response.body).to include(agent_hook_url)
     expect(response.body).to include("~/.config/multitasking/agent-hook claude")
     expect(response.body).to include("AskUserQuestion|ExitPlanMode")
@@ -33,19 +34,32 @@ RSpec.describe "Connections" do
     expect(response.body).to include(CGI.escapeHTML(new_task_url.to_json))
   end
 
-  it "does not let a member rotate the token" do
-    sign_in tenant.member
+  it "serves the assign skill to a signed-out curl" do
+    get agent_skill_path
 
-    expect { patch connection_path }.not_to change { tenant.team.reload.inbox_token }
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to eq(Rails.root.join("script/assign-skill.md").binread)
   end
 
-  it "lets an owner rotate the token, which retires the old one" do
-    sign_in tenant.owner
-    old = tenant.team.inbox_token
+  it "shows how to teach Claude to assign, pointed at this app" do
+    sign_in tenant.member
+
+    get connection_path
+
+    expect(response.body).to include(agent_skill_url)
+    expect(response.body).to include("~/.claude/skills/done-assign/SKILL.md")
+  end
+
+  it "lets a member rotate their own token, which retires the old one and leaves everybody else's alone" do
+    sign_in tenant.member
+    membership = tenant.member.membership_for(tenant.team)
+    old = membership.inbox_token
+    owners = tenant.owner.membership_for(tenant.team).inbox_token
 
     patch connection_path
 
-    expect(tenant.team.reload.inbox_token).not_to eq(old)
+    expect(membership.reload.inbox_token).not_to eq(old)
+    expect(tenant.owner.membership_for(tenant.team).inbox_token).to eq(owners)
     post inbox_tasks_path, params: { title: "Stale" }, headers: { "Authorization" => "Bearer #{old}" }, as: :json
     expect(response).to have_http_status(:unauthorized)
   end

@@ -27,7 +27,7 @@ module Projects
     private
 
     def set_project
-      @project = current_team.projects.find(params[:project_id])
+      @project = policy_scope(current_team.projects).find(params[:project_id])
     end
   end
 end

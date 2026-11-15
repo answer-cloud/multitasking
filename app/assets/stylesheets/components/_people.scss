@@ -1,0 +1,77 @@
+@use "../abstracts/mixins" as *;
+@use "../abstracts/breakpoints" as *;
+
+// The team page: a card per person, saying how much they have on and what is
+// at the top of their list. Hairlines and paper, like a panel; the name is
+// the way in.
+
+.people {
+  display: grid;
+  gap: var(--space-5);
+  padding: 0;
+  list-style: none;
+
+  @include sm { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @include lg { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+.person {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-5);
+  background-color: var(--paper-raised);
+  border: var(--border);
+  border-radius: var(--radius);
+}
+
+.person__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.person__name {
+  font-size: var(--text-md);
+  overflow-wrap: anywhere;
+
+  a { color: inherit; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+}
+
+.person__counts { color: var(--ink-secondary); }
+.person__counts .numeric { font-weight: var(--weight-bold); color: var(--ink); }
+
+.person__tasks {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3) 0 0;
+  border-top: var(--border);
+  list-style: none;
+  font-size: var(--text-sm);
+
+  .project-tag { display: block; color: var(--ink-tertiary); }
+}
+
+// A title can be a whole first prompt. Two lines is enough to know it by.
+.person__task {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.person__more { font-size: var(--text-sm); color: var(--ink-tertiary); }
+
+// Pushed to the foot, so the buttons line up across cards of any height.
+.person__open { margin-top: auto; padding-top: var(--space-2); }
+
+.people__unassigned {
+  margin-top: var(--space-8);
+
+  h2 { margin-bottom: var(--space-2); }
+  .table-wrap { margin-top: var(--space-4); }
+}

@@ -2,15 +2,15 @@
 <% hook = "~/.config/multitasking/agent-hook" %>
 
 <%= page_title "Connect your agents",
-      description: "When Claude Code or Codex finishes a turn or needs you, a task lands in #{current_team.name}’s list, filed under the repository’s project. Ping it again and the same task bounces back to the top." %>
+      description: "When Claude Code or Codex finishes a turn or needs you, a task lands on your list in #{current_team.name}, filed under the repository’s project. Ping it again and the same task bounces back to the top." %>
 
 <div class="split">
   <div class="stack--loose stack">
     <section class="stack">
       <h2>1. Install the hook</h2>
-      <p class="muted">Run this once on each machine you use an agent on. It downloads the hook and saves your token beside it, so the token never sits in a settings file you might share.</p>
+      <p class="muted">Run this once on each machine you use an agent on. It downloads the hook and saves your own token beside it, so the token never sits in a settings file you might share. Each person on the team runs their own: the token is what puts a task on your list and not a colleague’s.</p>
       <div data-controller="clipboard">
-        <pre data-clipboard-target="source">mkdir -p ~/.config/multitasking && curl -fsSL <%= agent_hook_url %> -o <%= hook %> && chmod +x <%= hook %> && printf 'url=<%= request.base_url %>\ntoken=<%= current_team.inbox_token %>\n' > ~/.config/multitasking/config && chmod 600 ~/.config/multitasking/config</pre>
+        <pre data-clipboard-target="source">mkdir -p ~/.config/multitasking && curl -fsSL <%= agent_hook_url %> -o <%= hook %> && chmod +x <%= hook %> && printf 'url=<%= request.base_url %>\ntoken=<%= current_membership.inbox_token %>\n' > ~/.config/multitasking/config && chmod 600 ~/.config/multitasking/config</pre>
         <button type="button" class="btn btn--sm" data-clipboard-target="button" data-action="clipboard#copy">Copy</button>
       </div>
     </section>
@@ -32,7 +32,18 @@
     </section>
 
     <section class="stack">
-      <h2>3. Codex</h2>
+      <h2>3. Assign from Claude</h2>
+      <p class="muted">Run this once and Claude Code learns to put a task on anybody’s list. Then say it in any session: <em>“assign Sam: check the pricing page on mobile”</em>, or <em>“add that to my list”</em>. It needs the hook from step 1; if you installed that before today, run step 1 again first.</p>
+      <div data-controller="clipboard">
+        <pre data-clipboard-target="source">mkdir -p ~/.claude/skills/done-assign && curl -fsSL <%= agent_skill_url %> -o ~/.claude/skills/done-assign/SKILL.md</pre>
+        <button type="button" class="btn btn--sm" data-clipboard-target="button" data-action="clipboard#copy">Copy</button>
+      </div>
+      <p class="muted">Or from a terminal, with no Claude at all:</p>
+      <pre><%= hook %> assign "<%= (current_team.users.where.not(id: Current.user.id).first || Current.user).first_name.presence || "Sam" %>" "Check the pricing page on mobile"</pre>
+    </section>
+
+    <section class="stack">
+      <h2>4. Codex</h2>
       <p class="muted">Add this line to <code>~/.codex/config.toml</code>. Codex calls it after every turn. It goes through <code>sh</code> because Codex does not expand <code>~</code>.</p>
       <div data-controller="clipboard">
         <pre data-clipboard-target="source">notify = ["sh", "-c", "exec <%= hook %> codex \"$1\"", "sh"]</pre>
@@ -41,13 +52,13 @@
     </section>
 
     <section class="stack">
-      <h2>4. Browser tabs</h2>
+      <h2>5. Browser tabs</h2>
       <p class="muted">Drag this to your bookmarks bar. Click it on any page and that tab opens here as a task, title and link filled in. Works in any browser, with your sign-in, no token.</p>
       <p><%= link_to "Save tab", tab_bookmarklet, class: "btn btn--sm", draggable: true %></p>
     </section>
 
     <section class="stack">
-      <h2>5. Slack</h2>
+      <h2>6. Slack</h2>
       <% if @slack %>
         <p class="muted">Connected to <%= @slack.slack_team_name.presence || "your Slack" %>. React to any message with 📌 <code>:<%= SlackConnection::EMOJI %>:</code> and it lands here, linked back to the message. Pin it again after ticking it off and it comes back. Or copy a message’s link in Slack and paste it into the quick-add box.</p>
         <p><%= button_to "Disconnect Slack", slack_connection_path, method: :delete, class: "btn btn--sm btn--ghost" %></p>
@@ -67,7 +78,7 @@
 
     <section class="stack">
       <h2>Anything else</h2>
-      <p class="muted">Any tool can post JSON to the inbox. Send the same <code>external_id</code> twice and it updates one task. Send a <code>directory</code> and the task is filed under that folder’s <%= link_to "project", projects_path %>.</p>
+      <p class="muted">Any tool can post JSON to the inbox. Send the same <code>external_id</code> twice and it updates one task. Send a <code>directory</code> and the task is filed under that folder’s <%= link_to "project", projects_path %>. Send an <code>assignee</code> — a colleague’s name or email — and it lands on their list, not yours.</p>
       <pre>curl -X POST <%= inbox_tasks_url %> \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
@@ -77,12 +88,10 @@
 
   <aside class="panel panel--sunken">
     <div class="panel__header"><h2>Inbox token</h2></div>
-    <p class="muted">Anyone with this token can add tasks to this team. Nothing else.</p>
-    <% if policy(current_team).update? %>
-      <p style="margin-top: var(--space-4);">
-        <%= button_to "Make a new token", connection_path, method: :patch, class: "btn btn--sm",
-              form: { data: { turbo_confirm: "The old token stops working at once. Carry on?" } } %>
-      </p>
-    <% end %>
+    <p class="muted">This token is yours. Anyone with it can add tasks to this team as you. Nothing else.</p>
+    <p style="margin-top: var(--space-4);">
+      <%= button_to "Make a new token", connection_path, method: :patch, class: "btn btn--sm",
+            form: { data: { turbo_confirm: "Your old token stops working at once. Carry on?" } } %>
+    </p>
   </aside>
 </div>

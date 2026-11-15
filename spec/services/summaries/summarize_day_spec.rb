@@ -42,6 +42,18 @@ RSpec.describe Summaries::SummarizeDay do
       expect(summary).to have_attributes(day: day, body: "A Storefront day.", task_count: 2, team: team)
     end
 
+    # The note is shown to everybody on the team.
+    it "leaves out anything filed under a project kept to admins" do
+      claude_says("A quiet day.")
+      finish("Send the invoice", at: evening - 3.hours)
+      finish("Call the candidate", at: evening - 1.hour, project: create(:project, team: team, admin_only: true))
+
+      summary = described_class.call(team: team, day: day).value
+
+      expect(summary.task_count).to eq(1)
+      expect(WebMock).to(have_requested(:post, messages_url).with { |request| request.body.exclude?("Call the candidate") })
+    end
+
     it "cuts the day in the team's zone, not UTC" do
       claude_says("Late one.")
       # 11pm in California is already tomorrow in UTC.

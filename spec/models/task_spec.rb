@@ -19,6 +19,7 @@ require "rails_helper"
 #  url              :string
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
+#  assignee_id      :bigint
 #  created_by_id    :bigint
 #  external_id      :string
 #  project_id       :bigint
@@ -26,14 +27,16 @@ require "rails_helper"
 #
 # Indexes
 #
-#  index_tasks_on_created_by_id                       (created_by_id)
-#  index_tasks_on_project_id                          (project_id)
-#  index_tasks_on_team_id                             (team_id)
-#  index_tasks_on_team_id_and_completed_at            (team_id,completed_at)
-#  index_tasks_on_team_id_and_source_and_external_id  (team_id,source,external_id) UNIQUE WHERE (external_id IS NOT NULL)
+#  index_tasks_on_created_by_id                             (created_by_id)
+#  index_tasks_on_project_id                                (project_id)
+#  index_tasks_on_team_id                                   (team_id)
+#  index_tasks_on_team_id_and_assignee_id_and_completed_at  (team_id,assignee_id,completed_at)
+#  index_tasks_on_team_id_and_completed_at                  (team_id,completed_at)
+#  index_tasks_on_team_id_and_source_and_external_id        (team_id,source,external_id) UNIQUE WHERE (external_id IS NOT NULL)
 #
 # Foreign Keys
 #
+#  fk_rails_...  (assignee_id => users.id) ON DELETE => nullify
 #  fk_rails_...  (created_by_id => users.id)
 #  fk_rails_...  (project_id => projects.id) ON DELETE => nullify
 #  fk_rails_...  (team_id => teams.id)
@@ -260,6 +263,57 @@ RSpec.describe Task do
 
     it "accepts only the agents it knows" do
       expect(build(:task, handed_to: "gemini")).not_to be_valid
+    end
+  end
+
+  describe "whose list it is on" do
+    let(:tenant) { create_tenant }
+
+    it "accepts somebody on the team, and nobody at all" do
+      expect(build(:task, team: tenant.team, assignee: tenant.member)).to be_valid
+      expect(build(:task, team: tenant.team, assignee: nil)).to be_valid
+    end
+
+    it "refuses somebody who is not on the team" do
+      task = build(:task, team: tenant.team, assignee: create(:user))
+
+      expect(task).not_to be_valid
+      expect(task.errors[:assignee]).to include("must be on this team")
+    end
+
+    # Each person keeps their own order. Dragging on one list must not
+    # renumber somebody else's.
+    it "orders each person's list on its own" do
+      mine = create(:task, team: tenant.team, assignee: tenant.owner)
+      theirs = create(:task, team: tenant.team, assignee: tenant.member)
+      create(:task, team: tenant.team, assignee: tenant.owner)
+
+      expect { mine.move_to(0) }.not_to change { theirs.reload.position }
+    end
+
+    it "lands on top of the list it is handed to" do
+      create(:task, team: tenant.team, assignee: tenant.member).move_to(0)
+      task = create(:task, team: tenant.team, assignee: tenant.owner)
+
+      task.update!(assignee: tenant.member)
+
+      expect(tenant.team.tasks.pending.assigned_to(tenant.member).in_order.first).to eq(task)
+    end
+
+    it "streams to its own assignee's list and nobody else's" do
+      mine = create(:task, team: tenant.team, assignee: tenant.owner)
+      theirs = create(:task, team: tenant.team, assignee: tenant.member)
+
+      expect(mine.stream).to eq([ tenant.team, tenant.owner, :tasks ])
+      expect(mine.stream).not_to eq(theirs.stream)
+    end
+
+    it "offers its assignee only the projects they can see" do
+      shared = create(:project, team: tenant.team)
+      create(:project, team: tenant.team, admin_only: true)
+
+      expect(create(:task, team: tenant.team, assignee: tenant.member).pickable_projects).to eq([ shared ])
+      expect(create(:task, team: tenant.team, assignee: tenant.owner).pickable_projects.size).to eq(2)
     end
   end
 end
