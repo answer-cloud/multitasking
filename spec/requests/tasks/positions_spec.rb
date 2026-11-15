@@ -4,8 +4,8 @@ require "rails_helper"
 
 RSpec.describe "Dragging a task up or down the list" do
   let(:tenant) { create_tenant }
-  let!(:bottom) { create(:task, :quiet, team: tenant.team) }
-  let!(:top) { create(:task, team: tenant.team) }
+  let!(:bottom) { create(:task, :quiet, team: tenant.team, assignee: tenant.member) }
+  let!(:top) { create(:task, team: tenant.team, assignee: tenant.member) }
 
   before { sign_in tenant.member }
 

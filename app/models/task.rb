@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
-# One thing to get done, wherever it came from.
+# One thing to get done, wherever it came from, on one person's list.
+#
+# A task has an assignee: whoever's list it is on. You add to your own list by
+# default, and to a colleague's by assigning it — from their list, from the
+# edit form, or by asking Claude. A task with nobody on it waits on the team
+# page.
 #
 # A task is typed or spoken into the app, or pushed in by another tool — a
 # Claude Code or Codex hook, a 📌 in Slack, later Chrome and email. Pushed
@@ -23,6 +28,7 @@
 #  url              :string
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
+#  assignee_id      :bigint
 #  created_by_id    :bigint
 #  external_id      :string
 #  project_id       :bigint
@@ -30,14 +36,16 @@
 #
 # Indexes
 #
-#  index_tasks_on_created_by_id                       (created_by_id)
-#  index_tasks_on_project_id                          (project_id)
-#  index_tasks_on_team_id                             (team_id)
-#  index_tasks_on_team_id_and_completed_at            (team_id,completed_at)
-#  index_tasks_on_team_id_and_source_and_external_id  (team_id,source,external_id) UNIQUE WHERE (external_id IS NOT NULL)
+#  index_tasks_on_created_by_id                             (created_by_id)
+#  index_tasks_on_project_id                                (project_id)
+#  index_tasks_on_team_id                                   (team_id)
+#  index_tasks_on_team_id_and_assignee_id_and_completed_at  (team_id,assignee_id,completed_at)
+#  index_tasks_on_team_id_and_completed_at                  (team_id,completed_at)
+#  index_tasks_on_team_id_and_source_and_external_id        (team_id,source,external_id) UNIQUE WHERE (external_id IS NOT NULL)
 #
 # Foreign Keys
 #
+#  fk_rails_...  (assignee_id => users.id) ON DELETE => nullify
 #  fk_rails_...  (created_by_id => users.id)
 #  fk_rails_...  (project_id => projects.id) ON DELETE => nullify
 #  fk_rails_...  (team_id => teams.id)
@@ -83,6 +91,7 @@ class Task < ApplicationRecord
   QUIET_AFTER = 2.days
 
   belongs_to :created_by, class_name: "User", optional: true
+  belongs_to :assignee, class_name: "User", optional: true
   belongs_to :project, optional: true
 
   validates :title, presence: true, length: { maximum: TITLE_LIMIT }
@@ -92,10 +101,24 @@ class Task < ApplicationRecord
   validates :handed_to, inclusion: { in: AGENTS }, allow_nil: true
   validate :url_is_a_web_link
   validate :project_is_on_this_team
+  validate :assignee_is_on_this_team, if: :assignee_id_changed?
 
   before_validation :touch_activity, on: :create
   before_create :put_on_top
+  # Handed to somebody else, it lands on top of their list like anything new.
+  before_update :put_on_top, if: :assignee_id_changed?
 
+  # One person's list. Nil is nobody's: the tasks waiting on the team page.
+  scope :assigned_to, ->(user) { where(assignee: user) }
+  # What exists for this person at all: everything for an admin, and for
+  # anybody else everything outside the projects kept to admins. The policy
+  # scopes call this; so do broadcasts, which have no request to ask.
+  scope :visible_to, ->(membership) {
+    next none if membership.nil?
+    next all if membership.admin_or_above?
+
+    outside(membership.team.projects.admin_only.ids)
+  }
   scope :pending, -> { where(completed_at: nil) }
   scope :done, -> { where.not(completed_at: nil) }
   scope :prioritized, -> { where(priority: true) }
@@ -202,16 +225,28 @@ class Task < ApplicationRecord
     self.position = siblings.minimum(:position).to_i - 1
   end
 
-  # Moves the task to the top of any open dashboard for its team, and out of
-  # the jar if it had been ticked off. A priority task stays in the priority
-  # list. For tasks that arrive from outside — the inbox, Slack — where no
-  # request is there to answer with a stream of its own.
+  # The stream an open copy of its assignee's list listens to. One per
+  # person, so a task never shows up on a list it is not on.
+  def stream = [ team, assignee, :tasks ]
+
+  # The projects its row's picker offers: the ones its assignee can see. For
+  # the broadcasts, which render the row with nobody signed in.
+  def pickable_projects = team.projects.visible_to(assignee&.membership_for(team)).alphabetical.to_a
+
+  # Moves the task to the top of any open copy of its assignee's list, and out
+  # of the jar if it had been ticked off. A priority task stays in the
+  # priority list. For tasks that arrive from outside — the inbox, Slack —
+  # where no request is there to answer with a stream of its own. Nobody's
+  # task is on no list, so there is nothing to tell.
   def broadcast_arrival
-    Turbo::StreamsChannel.broadcast_remove_to(team, :tasks, target: self)
-    Turbo::StreamsChannel.broadcast_remove_to(team, :tasks, target: ActionView::RecordIdentifier.dom_id(self, :done))
-    Turbo::StreamsChannel.broadcast_prepend_to(team, :tasks, target: ApplicationController.helpers.task_list_id(self), partial: "tasks/task",
-                                                             locals: { task: self, projects: team.projects.alphabetical.to_a })
-    Turbo::StreamsChannel.broadcast_update_to(team, :tasks, targets: "[data-done-count]", html: team.tasks.done_today.count.to_s)
+    return if assignee.nil?
+
+    Turbo::StreamsChannel.broadcast_remove_to(*stream, target: self)
+    Turbo::StreamsChannel.broadcast_remove_to(*stream, target: ActionView::RecordIdentifier.dom_id(self, :done))
+    Turbo::StreamsChannel.broadcast_prepend_to(*stream, target: ApplicationController.helpers.task_list_id(self), partial: "tasks/task",
+                                                        locals: { task: self, projects: pickable_projects })
+    Turbo::StreamsChannel.broadcast_update_to(*stream, targets: ApplicationController.helpers.done_count_selector(assignee),
+                                                       html: team.tasks.assigned_to(assignee).done_today.count.to_s)
   end
 
   # Drops the task into its list of things still to do at `index`, counting
@@ -228,10 +263,10 @@ class Task < ApplicationRecord
 
   private
 
-  # The other tasks still to do in the same list as this one. The priority
-  # list and the rest are numbered separately, so dragging in one never
-  # shuffles the other.
-  def siblings = team.tasks.pending.where(priority: priority).where.not(id: id)
+  # The other tasks still to do in the same list as this one: the same
+  # person's, and the priority list and the rest are numbered separately, so
+  # dragging in one never shuffles the other.
+  def siblings = team.tasks.pending.assigned_to(assignee).where(priority: priority).where.not(id: id)
 
   def place_in_list!(priority:)
     self.priority = priority
@@ -259,6 +294,15 @@ class Task < ApplicationRecord
     return if project.nil? || project.team_id == team_id
 
     errors.add(:project, "must belong to this team")
+  end
+
+  # Controllers offer only the team's own people, so this should never fire.
+  # It is here because an id in a form is only a claim, and a task on a
+  # stranger's list would show them this team's work.
+  def assignee_is_on_this_team
+    return if assignee.nil? || assignee.member_of?(team)
+
+    errors.add(:assignee, "must be on this team")
   end
 
   def touch_activity

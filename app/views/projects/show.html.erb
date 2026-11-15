@@ -1,7 +1,10 @@
 <% content_for :title, @project.name %>
 
 <%= page_title @project.name, eyebrow: link_to("Projects", projects_path),
-      description: safe_join([ short_directory(@project), "#{@tasks.size} to do", "#{@done.size} done" ], " · ") do %>
+      description: safe_join([ short_directory(@project), "#{@tasks.size} to do", "#{@done.size} done", ("Admins only" if @project.admin_only?) ].compact, " · ") do %>
+  <% if policy(@project).restrict? %>
+    <%= render "projects/restriction_toggle", project: @project %>
+  <% end %>
   <% if policy(@project).update? %>
     <%= link_to "Edit", edit_project_path(@project), class: "btn" %>
   <% end %>
@@ -18,6 +21,7 @@
         <thead>
           <tr>
             <th>To do</th>
+            <th>Who</th>
             <th>From</th>
             <th class="is-numeric">Age</th>
           </tr>
@@ -26,6 +30,7 @@
           <% @tasks.each do |task| %>
             <tr id="<%= dom_id(task) %>">
               <td><%= link_to task_title(task), task, class: "table__primary" %></td>
+              <td><%= task.assignee&.name || "—" %></td>
               <td><%= source_badge(task) %></td>
               <td class="is-numeric quiet">
                 <%= tag.time(short_age(task.last_activity_at), datetime: task.last_activity_at.iso8601,
@@ -44,6 +49,7 @@
         <thead>
           <tr>
             <th>Done</th>
+            <th>Who</th>
             <th>From</th>
             <th class="is-numeric">When</th>
           </tr>
@@ -52,6 +58,7 @@
           <% @done.each do |task| %>
             <tr id="<%= dom_id(task, :done) %>">
               <td><%= link_to task_title(task), task, class: "table__primary is-done" %></td>
+              <td><%= task.assignee&.name || "—" %></td>
               <td><%= source_badge(task) %></td>
               <td class="is-numeric quiet"><%= short_datetime(task.completed_at) %></td>
             </tr>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_06_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_100600) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -43,11 +43,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_120000) do
   end
 
   create_table "daily_summaries", force: :cascade do |t|
-    t.text "body", null: false
-    t.datetime "created_at", null: false
-    t.date "day", null: false
-    t.integer "task_count", null: false
     t.bigint "team_id", null: false
+    t.date "day", null: false
+    t.text "body", null: false
+    t.integer "task_count", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["team_id", "day"], name: "index_daily_summaries_on_team_id_and_day", unique: true
     t.index ["team_id"], name: "index_daily_summaries_on_team_id"
@@ -71,11 +71,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_120000) do
 
   create_table "memberships", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.bigint "hidden_project_ids", default: [], null: false, array: true
     t.integer "role", default: 0, null: false
     t.bigint "team_id", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.bigint "hidden_project_ids", default: [], null: false, array: true
+    t.string "inbox_token", null: false
+    t.index ["inbox_token"], name: "index_memberships_on_inbox_token", unique: true
     t.index ["team_id", "role"], name: "index_memberships_on_team_id_and_role"
     t.index ["team_id"], name: "index_memberships_on_team_id"
     t.index ["user_id", "team_id"], name: "index_memberships_on_user_id_and_team_id", unique: true
@@ -83,14 +85,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_120000) do
   end
 
   create_table "projects", force: :cascade do |t|
-    t.string "aliases", default: [], null: false, array: true
-    t.string "color"
-    t.datetime "created_at", null: false
-    t.bigint "created_by_id"
-    t.string "directory"
-    t.string "name", null: false
     t.bigint "team_id", null: false
+    t.bigint "created_by_id"
+    t.string "name", null: false
+    t.string "directory"
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "color"
+    t.string "aliases", default: [], null: false, array: true
+    t.boolean "admin_only", default: false, null: false
     t.index ["created_by_id"], name: "index_projects_on_created_by_id"
     t.index ["team_id", "directory"], name: "index_projects_on_team_id_and_directory", unique: true, where: "(directory IS NOT NULL)"
     t.index ["team_id", "name"], name: "index_projects_on_team_id_and_name"
@@ -98,14 +101,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_120000) do
   end
 
   create_table "slack_connections", force: :cascade do |t|
-    t.text "access_token", null: false
-    t.datetime "created_at", null: false
+    t.bigint "team_id", null: false
+    t.bigint "user_id", null: false
     t.string "slack_team_id", null: false
     t.string "slack_team_name"
     t.string "slack_user_id", null: false
-    t.bigint "team_id", null: false
+    t.text "access_token", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
     t.index ["slack_team_id", "slack_user_id"], name: "index_slack_connections_on_slack_team_id_and_slack_user_id", unique: true
     t.index ["team_id", "user_id"], name: "index_slack_connections_on_team_id_and_user_id", unique: true
     t.index ["team_id"], name: "index_slack_connections_on_team_id"
@@ -147,24 +150,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_120000) do
   end
 
   create_table "tasks", force: :cascade do |t|
+    t.bigint "team_id", null: false
+    t.bigint "created_by_id"
+    t.string "title", null: false
+    t.text "notes"
+    t.string "source", default: "typed", null: false
+    t.string "url"
+    t.string "external_id"
+    t.datetime "last_activity_at", null: false
     t.datetime "completed_at"
     t.datetime "created_at", null: false
-    t.bigint "created_by_id"
-    t.string "external_id"
-    t.datetime "handed_at"
-    t.string "handed_to"
-    t.datetime "last_activity_at", null: false
-    t.text "notes"
+    t.datetime "updated_at", null: false
+    t.bigint "project_id"
     t.integer "position", default: 0, null: false
     t.boolean "priority", default: false, null: false
-    t.bigint "project_id"
-    t.string "source", default: "typed", null: false
-    t.bigint "team_id", null: false
-    t.string "title", null: false
-    t.datetime "updated_at", null: false
-    t.string "url"
+    t.string "handed_to"
+    t.datetime "handed_at"
+    t.bigint "assignee_id"
     t.index ["created_by_id"], name: "index_tasks_on_created_by_id"
     t.index ["project_id"], name: "index_tasks_on_project_id"
+    t.index ["team_id", "assignee_id", "completed_at"], name: "index_tasks_on_team_id_and_assignee_id_and_completed_at"
     t.index ["team_id", "completed_at"], name: "index_tasks_on_team_id_and_completed_at"
     t.index ["team_id", "source", "external_id"], name: "index_tasks_on_team_id_and_source_and_external_id", unique: true, where: "(external_id IS NOT NULL)"
     t.index ["team_id"], name: "index_tasks_on_team_id"
@@ -190,13 +195,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_120000) do
 
   create_table "teams", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.string "inbox_token", null: false
     t.string "name", null: false
     t.string "slug", null: false
     t.string "stripe_customer_id"
-    t.string "time_zone", default: "UTC", null: false
     t.datetime "updated_at", null: false
-    t.index ["inbox_token"], name: "index_teams_on_inbox_token", unique: true
+    t.string "time_zone", default: "UTC", null: false
     t.index ["slug"], name: "index_teams_on_slug", unique: true
     t.index ["stripe_customer_id"], name: "index_teams_on_stripe_customer_id", unique: true
   end
@@ -240,6 +243,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_120000) do
   add_foreign_key "subscriptions", "teams"
   add_foreign_key "tasks", "projects", on_delete: :nullify
   add_foreign_key "tasks", "teams"
+  add_foreign_key "tasks", "users", column: "assignee_id", on_delete: :nullify
   add_foreign_key "tasks", "users", column: "created_by_id"
   add_foreign_key "team_invitations", "teams"
   add_foreign_key "team_invitations", "users", column: "accepted_by_id"

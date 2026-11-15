@@ -11,6 +11,7 @@
 # Table name: projects
 #
 #  id            :bigint           not null, primary key
+#  admin_only    :boolean          default(FALSE), not null
 #  aliases       :string           default([]), not null, is an Array
 #  color         :string
 #  directory     :string
@@ -64,6 +65,17 @@ class Project < ApplicationRecord
   normalizes :directory, with: ->(directory) { normalize_directory(directory) }
 
   scope :alphabetical, -> { order(Arel.sql("lower(projects.name)")) }
+  # Kept to admins, and everything else. See Projects::RestrictionsController.
+  scope :admin_only, -> { where(admin_only: true) }
+  scope :shared, -> { where(admin_only: false) }
+  # The projects that exist for this person: all of them for an admin, the
+  # shared ones for anybody else. ProjectPolicy::Scope calls this; so does
+  # everything with no request to ask — a broadcast, the inbox.
+  scope :visible_to, ->(membership) {
+    next none if membership.nil?
+
+    membership.admin_or_above? ? all : shared
+  }
 
   # A project nobody has picked a colour for — every one an agent makes, and
   # every one from before colours — gets one from its id. Stored as nil, so
@@ -83,6 +95,11 @@ class Project < ApplicationRecord
   # The other names a project answers to, as the form shows them: "Slater,
   # Slater Sweet". Mostly for voice, which hears what it likes.
   def alias_list = aliases.join(", ")
+
+  # Kept to admins, or handed back to the whole team. Both set absolute state,
+  # so a double-click lands in the same place.
+  def restrict! = update!(admin_only: true)
+  def share! = update!(admin_only: false)
 
   def alias_list=(list)
     self.aliases = list.to_s.split(",")
@@ -107,6 +124,15 @@ class Project < ApplicationRecord
       return [ project, words.drop(count).join(" ") ] if project
     end
     nil
+  end
+
+  # The project called this, by its name or any of its aliases, read as
+  # loosely as `leading` reads them. Call it through a team's projects.
+  def self.named(name)
+    wanted = comparable(name.to_s)
+    return if wanted.empty?
+
+    all.detect { |project| [ project.name, *project.aliases ].any? { |known| comparable(known) == wanted } }
   end
 
   def self.comparable(name) = name.downcase.tr("-_", "  ").squish.sub(/[:,]\z/, "")

@@ -11,9 +11,9 @@ RSpec.describe "Hiding projects" do
 
   describe "hiding" do
     it "takes the project's tasks off the dashboard, priorities and all" do
-      create(:task, team: tenant.team, project: project, title: "Hidden away")
-      create(:task, team: tenant.team, project: project, title: "Starred but hidden").prioritize!
-      create(:task, team: tenant.team, title: "Unfiled")
+      create(:task, team: tenant.team, assignee: tenant.member, project: project, title: "Hidden away")
+      create(:task, team: tenant.team, assignee: tenant.member, project: project, title: "Starred but hidden").prioritize!
+      create(:task, team: tenant.team, assignee: tenant.member, title: "Unfiled")
 
       post project_hiding_path(project)
       get dashboard_path
@@ -24,7 +24,7 @@ RSpec.describe "Hiding projects" do
     end
 
     it "leaves the project's tasks off the by-project view too" do
-      create(:task, team: tenant.team, project: project, title: "Hidden away")
+      create(:task, team: tenant.team, assignee: tenant.member, project: project, title: "Hidden away")
       membership.hide!(project)
 
       get dashboard_path(view: "projects")
@@ -33,7 +33,7 @@ RSpec.describe "Hiding projects" do
     end
 
     it "still counts its tasks finished today, since the jar is everything" do
-      create(:task, :done, team: tenant.team, project: project, title: "Done anyway")
+      create(:task, :done, team: tenant.team, assignee: tenant.member, project: project, title: "Done anyway")
       membership.hide!(project)
 
       get dashboard_path
@@ -58,10 +58,10 @@ RSpec.describe "Hiding projects" do
       expect(membership.reload.hidden_project_ids).to eq([ project.id ])
     end
 
-    # The list is the team's. One person hiding a project must not take it
-    # off anyone else's dashboard.
+    # The project is the team's. One person hiding it must not take it off
+    # anyone else's dashboard.
     it "hides it for you alone" do
-      create(:task, team: tenant.team, project: project, title: "Still theirs")
+      create(:task, team: tenant.team, assignee: tenant.owner, project: project, title: "Still theirs")
       post project_hiding_path(project)
 
       sign_in tenant.owner
@@ -83,7 +83,7 @@ RSpec.describe "Hiding projects" do
 
   describe "showing again" do
     it "puts the project's tasks back on the dashboard" do
-      create(:task, team: tenant.team, project: project, title: "Back again")
+      create(:task, team: tenant.team, assignee: tenant.member, project: project, title: "Back again")
       membership.hide!(project)
 
       delete project_hiding_path(project)

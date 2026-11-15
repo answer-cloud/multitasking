@@ -8,6 +8,7 @@
 #
 #  id                 :bigint           not null, primary key
 #  hidden_project_ids :bigint           default([]), not null, is an Array
+#  inbox_token        :string           not null
 #  role               :integer          default(0), not null
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
@@ -16,6 +17,7 @@
 #
 # Indexes
 #
+#  index_memberships_on_inbox_token          (inbox_token) UNIQUE
 #  index_memberships_on_team_id              (team_id)
 #  index_memberships_on_team_id_and_role     (team_id,role)
 #  index_memberships_on_user_id              (user_id)
@@ -38,6 +40,11 @@ class Membership < ApplicationRecord
   validates :user_id, uniqueness: { scope: :team_id }
   validate :team_must_keep_an_owner, on: :update
   before_destroy :ensure_team_keeps_an_owner
+  after_destroy :release_tasks
+
+  # The secret a person's hooks post tasks with. It says which team and whose
+  # list, so it is theirs alone. See Inbox::TasksController.
+  has_secure_token :inbox_token
 
   after_commit :sync_billing_seats, on: %i[create destroy]
 
@@ -48,6 +55,22 @@ class Membership < ApplicationRecord
     "admin" => "Admin",
     "member" => "Member"
   }.freeze
+
+  # The member somebody means by "Sam", "sam lee" or "sam@example.com". Only
+  # a name that picks out exactly one person finds anybody: with two Sams on
+  # the team, "Sam" is nobody, and the caller has to say which. Call it
+  # through a team's memberships.
+  def self.named(name)
+    wanted = name.to_s.squish.downcase
+    return if wanted.empty?
+
+    people = includes(:user).to_a
+    matches = [ :email, :name, :first_name ].lazy.map { |attribute|
+      people.select { |membership| membership.user.public_send(attribute).to_s.squish.downcase == wanted }
+    }.detect(&:any?)
+
+    matches.first if matches&.one?
+  end
 
   def role_label = ROLE_LABELS.fetch(role)
 
@@ -92,6 +115,15 @@ class Membership < ApplicationRecord
 
     errors.add(:base, "A team must always have at least one owner")
     throw :abort
+  end
+
+  # Somebody who has left can no longer get to their list, so what they had
+  # still to do goes back to the team to hand out. What they finished stays
+  # theirs. Skipped when the whole team is going: its tasks go with it.
+  def release_tasks
+    return if destroyed_by_association.present? || team.nil? || team.destroyed?
+
+    team.tasks.pending.assigned_to(user).update_all(assignee_id: nil)
   end
 
   # Seats are billed per member, so any change to the roster has to reach

@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-# Tasks are the team's shared to-do list. Anyone on the team may add, finish or
-# remove one — a task list you need an admin to tidy is a task list nobody
+# Each person has a list, and the lists are the team's to see. Anyone on the
+# team may add, finish or remove a task on any of them, and hand one to a
+# colleague — a task list you need an admin to tidy is a task list nobody
 # tidies.
 class TaskPolicy < ApplicationPolicy
   def index?    = member?
@@ -12,11 +13,9 @@ class TaskPolicy < ApplicationPolicy
   def complete? = member?
   def destroy?  = member?
 
+  # A task filed under a project kept to admins does not exist for anybody
+  # else, whoever's list it is on.
   class Scope < ApplicationPolicy::Scope
-    def resolve
-      return scope.none if membership.nil?
-
-      scope.all
-    end
+    def resolve = scope.visible_to(membership)
   end
 end

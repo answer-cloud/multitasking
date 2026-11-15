@@ -1,49 +1,13 @@
 # frozen_string_literal: true
 
-# The front door: what is left to do, and what has already gone in the jar
-# today.
+# The front door: what is left on your own list, and what has already gone in
+# the jar today. A colleague's list is the same page; see PeopleController.
 class DashboardController < ApplicationController
-  # The two ways to cut the list: one list in the order you keep it, or one
-  # per project. The first is the default.
-  VIEWS = %w[tasks projects].freeze
+  include TaskList
 
   def show
     authorize current_team, :show?, policy_class: TeamPolicy
 
-    # Everything here starts from the team, not from the model class.
-    @priorities = policy_scope(pending.prioritized)
-    @tasks = policy_scope(pending.unprioritized)
-    @projects = current_team.projects.alphabetical.to_a
-    set_done_today
-    @new_task = current_team.tasks.new
-    @view = view
-    @groups = by_project(@tasks) if @view == "projects"
-  end
-
-  private
-
-  # Everything still to do, in list order, less the projects you hid. The
-  # priority list and the rest are both cut from it.
-  def pending
-    current_team.tasks.pending.outside(current_membership.hidden_project_ids)
-      .in_order.includes(:created_by, :project)
-  end
-
-  # What went in the jar today, and Claude's note on it — written at 9pm, so
-  # nil for most of the day.
-  def set_done_today
-    @done_today = policy_scope(current_team.tasks.done_today.recently_done.includes(:project))
-    @summary = policy_scope(current_team.daily_summaries).find_by(day: Date.current)
-  end
-
-  # Remembered, so the dashboard opens the way you left it.
-  def view
-    cookies.permanent[:dashboard_view] = params[:view] if VIEWS.include?(params[:view])
-    VIEWS.include?(cookies[:dashboard_view]) ? cookies[:dashboard_view] : VIEWS.first
-  end
-
-  # Projects A to Z, Other last. Each keeps its tasks in list order.
-  def by_project(tasks)
-    tasks.group_by(&:project).sort_by { |project, _| project ? [ 0, project.name.downcase ] : [ 1, "" ] }
+    load_task_list(Current.user, hidden_project_ids: current_membership.hidden_project_ids)
   end
 end

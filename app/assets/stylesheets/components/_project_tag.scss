@@ -132,4 +132,8 @@ a.project-tag:hover { color: var(--ink); text-decoration: underline; }
 
 .hiding-toggle__pupil { fill: currentColor; stroke: none; }
 
+// The padlock that keeps a project to admins is the same button. Shut, it
+// stays in ink: a project the team cannot see should not be easy to miss.
+.hiding-toggle__button.is-on { color: var(--ink); }
+
 .is-actions .hiding-toggle { margin-right: var(--space-4); }

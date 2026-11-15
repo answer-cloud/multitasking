@@ -18,6 +18,7 @@ Rails.application.routes.draw do
     get "terms",   to: "pages#terms"
     get "privacy", to: "pages#privacy"
     get "agent-hook", to: "hooks#show", as: :agent_hook
+    get "agent-skill", to: "skills#show", as: :agent_skill
   end
 
   # --- Signed-in application ----------------------------------------------
@@ -39,7 +40,12 @@ Rails.application.routes.draw do
   resources :projects do
     # Keeping it off your dashboard, and letting it back on.
     resource :hiding, only: %i[create destroy], module: :projects
+    # Keeping it to the team's admins, and handing it back to everybody.
+    resource :restriction, only: %i[create destroy], module: :projects
   end
+
+  # The team at a glance, and each person's list.
+  resources :people, only: %i[index show]
 
   # The page that sets up the hooks, and rotates the inbox token they use.
   resource :connection, only: %i[show update]

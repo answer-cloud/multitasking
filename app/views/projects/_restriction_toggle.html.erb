@@ -1,0 +1,17 @@
+<%# Keeps a project to the team's admins, or hands it back to everybody. A %>
+<%# real button in a real form, so it works without JavaScript. The padlock %>
+<%# shows where the project stands — shut while only admins see it, open %>
+<%# while the whole team does — and the label says what a click does. %>
+<% action = project.admin_only? ? "Show #{project.name} to the whole team" : "Hide #{project.name} from everyone but admins" %>
+<%= button_to project_restriction_path(project), method: project.admin_only? ? :delete : :post,
+      class: "hiding-toggle__button#{" is-on" if project.admin_only?}", form_class: "hiding-toggle",
+      aria: { label: action }, title: action do %>
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <rect x="5" y="11" width="14" height="9.5" rx="2" />
+    <% if project.admin_only? %>
+      <path d="M8 11V7.5a4 4 0 0 1 8 0V11" />
+    <% else %>
+      <path d="M8 11V7.5a4 4 0 0 1 7.6-1.7" />
+    <% end %>
+  </svg>
+<% end %>

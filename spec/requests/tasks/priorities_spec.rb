@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe "Task priorities" do
   let(:tenant) { create_tenant }
-  let!(:task) { create(:task, team: tenant.team) }
+  let!(:task) { create(:task, team: tenant.team, assignee: tenant.member) }
 
   before { sign_in tenant.member }
 
@@ -18,7 +18,7 @@ RSpec.describe "Task priorities" do
     end
 
     it "shows it in the priority section, above the rest, on the next visit" do
-      other = create(:task, team: tenant.team)
+      other = create(:task, team: tenant.team, assignee: tenant.member)
       task.prioritize!
 
       get dashboard_path

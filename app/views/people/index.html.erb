@@ -1,0 +1,70 @@
+<% content_for :title, "Team" %>
+
+<%= page_title "Team", description: "Everybody in #{current_team.name}, and what each has on. Open a list to see it all, or to add to it." do %>
+  <%= link_to "Members", team_members_path(current_team), class: "btn" %>
+<% end %>
+
+<ul class="people">
+  <% @memberships.each do |membership| %>
+    <% tasks = @pending.fetch(membership.user_id, []) %>
+    <% list = membership.user == Current.user ? dashboard_path : person_path(membership) %>
+    <li class="person">
+      <div class="person__head">
+        <h2 class="person__name"><%= link_to membership.user.name, list %></h2>
+        <%= role_badge(membership) %>
+      </div>
+
+      <p class="person__counts">
+        <span class="numeric"><%= tasks.size %></span> to do
+        <span aria-hidden="true">·</span>
+        <span class="numeric"><%= @done_today.fetch(membership.user_id, 0) %></span> done today
+      </p>
+
+      <% if tasks.any? %>
+        <ul class="person__tasks">
+          <% tasks.first(PeopleController::PREVIEW).each do |task| %>
+            <li><%= project_tag(task.project) %> <span class="person__task"><%= task_title(task) %></span></li>
+          <% end %>
+        </ul>
+        <% if tasks.size > PeopleController::PREVIEW %>
+          <p class="person__more">and <%= tasks.size - PeopleController::PREVIEW %> more</p>
+        <% end %>
+      <% else %>
+        <p class="person__more">Nothing on the list.</p>
+      <% end %>
+
+      <p class="person__open">
+        <%= link_to "Open list →", list, class: "btn btn--sm", "aria-label": "Open #{membership.user.name}’s list" %>
+      </p>
+    </li>
+  <% end %>
+</ul>
+
+<%# Tasks with nobody on them: left behind by somebody who has gone, or %>
+<%# unassigned on purpose. Shown only while there are some. %>
+<% if @unassigned.any? %>
+  <section class="people__unassigned" aria-labelledby="unassigned_heading">
+    <h2 id="unassigned_heading">Nobody’s yet</h2>
+    <p class="muted">These are on no one’s list. Open one to give it to somebody.</p>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Task</th>
+            <th>Project</th>
+            <th class="is-actions"><span class="visually-hidden">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @unassigned.each do |task| %>
+            <tr id="<%= dom_id(task) %>">
+              <td><%= link_to task_title(task), task, class: "table__primary" %></td>
+              <td><%= project_tag(task.project) %></td>
+              <td class="is-actions"><%= link_to "Assign", edit_task_path(task), class: "btn-link" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<% end %>

@@ -5,9 +5,16 @@ module Inbox
   # Chrome extension and email later. Slack has its own door; see
   # Slack::EventsController.
   #
-  # There is no user here. The caller proves which team it writes to with the
-  # team's inbox token, sent as a bearer token — never in the URL, where it
-  # would end up in server logs and browser history.
+  # There is no session here. The caller proves who it is with a person's
+  # inbox token, sent as a bearer token — never in the URL, where it would end
+  # up in server logs and browser history. The token is a membership's, so it
+  # says both which team is written to and whose list the task lands on.
+  #
+  # A caller that sends an `assignee` — a colleague's name or email — puts the
+  # task on that person's list instead. This is how "assign Sam: fix the
+  # navbar", said to Claude, reaches Sam; see script/agent-hook. A name that
+  # picks out nobody, or more than one person, is refused rather than guessed
+  # at. A `project`, by name, files it.
   #
   # A caller that sends an `external_id` (a Claude session, a Codex thread)
   # gets one task per id. A second ping updates that task, moves it back to the
@@ -25,7 +32,8 @@ module Inbox
 
     rate_limit to: 120, within: 1.minute, by: -> { request.remote_ip }
 
-    before_action :set_team
+    before_action :set_membership
+    before_action :set_assignee
 
     def create
       task = find_or_build_task
@@ -33,12 +41,11 @@ module Inbox
       task.completed_at = nil
       task.last_activity_at = Time.current
       task.put_on_top if task.persisted?
-      task.project ||= @team.projects.claim_directory(params[:directory])
+      task.project ||= named_project || projects.claim_directory(params[:directory])
 
       if task.save
         task.broadcast_arrival
-        render json: { id: task.id, created: task.previously_new_record? },
-               status: task.previously_new_record? ? :created : :ok
+        render_saved(task)
       else
         render json: { errors: task.errors.full_messages }, status: :unprocessable_content
       end
@@ -46,21 +53,55 @@ module Inbox
 
     private
 
-    def set_team
-      @team = authenticate_with_http_token { |token, _| Team.find_by(inbox_token: token) if token.present? }
-
-      head :unauthorized if @team.nil?
+    # The assignee's name goes back so the caller can say whose list it is on.
+    def render_saved(task)
+      render json: { id: task.id, created: task.previously_new_record?, assignee: task.assignee&.name },
+             status: task.previously_new_record? ? :created : :ok
     end
+
+    # The one lookup here that does not start from a team: the token is what
+    # says which team this is.
+    def set_membership
+      @membership = authenticate_with_http_token { |token, _| Membership.find_by(inbox_token: token) if token.present? }
+      return head :unauthorized if @membership.nil?
+
+      @team = @membership.team
+    end
+
+    # Whose list this is for: the person named, found through the team, or
+    # the token's own.
+    def set_assignee
+      name = params[:assignee].to_s.squish
+      return @assignee = @membership.user if name.empty?
+
+      @assignee = @team.memberships.named(name)&.user
+      return if @assignee
+
+      people = @team.memberships.ordered.includes(:user).map { |membership| membership.user.name }
+      render json: { errors: [ "Nobody on this team is called “#{name.first(100)}”. The team is: #{people.to_sentence}." ] },
+             status: :unprocessable_content
+    end
+
+    # The projects the token's owner can see. A hook cannot file a task under
+    # a project its owner could not open, or learn that one exists.
+    def projects = @team.projects.visible_to(@membership)
+
+    def named_project = projects.named(params[:project])
 
     # Started from the team, like every other tenant query.
     def find_or_build_task
       external_id = params[:external_id].presence&.to_s&.first(255)
-      return @team.tasks.new if external_id.nil?
+      return new_task if external_id.nil?
 
-      task = @team.tasks.find_by(source: pushed_source, external_id: external_id) || handed_off_task || @team.tasks.new
+      task = @team.tasks.find_by(source: pushed_source, external_id: external_id) || handed_off_task || new_task
       task.external_id = external_id
+      # A session that pings again stays on the list it is on, unless this
+      # ping names somebody.
+      task.assignee = @assignee if params[:assignee].present?
       task
     end
+
+    def new_task = @team.tasks.new(created_by: @membership.user, assignee: @assignee)
 
     # The task somebody handed to this agent from its row, coming back from the
     # session that started on it: that session's first prompt begins with the

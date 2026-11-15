@@ -297,7 +297,7 @@ RSpec.describe "Tasks" do
 
   describe "editing" do
     let(:tenant) { create_tenant }
-    let!(:task) { create(:task, team: tenant.team, last_activity_at: 3.days.ago) }
+    let!(:task) { create(:task, team: tenant.team, assignee: tenant.member, last_activity_at: 3.days.ago) }
 
     before { sign_in tenant.member }
 
@@ -324,7 +324,7 @@ RSpec.describe "Tasks" do
 
   describe "deleting" do
     let(:tenant) { create_tenant }
-    let!(:task) { create(:task, team: tenant.team) }
+    let!(:task) { create(:task, team: tenant.team, assignee: tenant.member) }
 
     it "lets any member delete a task" do
       sign_in tenant.member
@@ -341,8 +341,8 @@ RSpec.describe "Tasks" do
     before { sign_in tenant.member }
 
     it "lists finished tasks and leaves open ones on the dashboard" do
-      create(:task, :done, team: tenant.team, title: "Shipped it")
-      create(:task, team: tenant.team, title: "Still going")
+      create(:task, :done, team: tenant.team, assignee: tenant.member, title: "Shipped it")
+      create(:task, team: tenant.team, assignee: tenant.member, title: "Still going")
 
       get tasks_path
 
@@ -352,7 +352,7 @@ RSpec.describe "Tasks" do
 
     it "searches within the team only" do
       theirs = create_tenant
-      create(:task, :done, team: tenant.team, title: "Alpha report")
+      create(:task, :done, team: tenant.team, assignee: tenant.member, title: "Alpha report")
       create(:task, :done, team: theirs.team, title: "Alpha secret")
 
       get tasks_path, params: { q: "Alpha" }
@@ -365,9 +365,9 @@ RSpec.describe "Tasks" do
       around { |example| travel_to(Time.utc(2026, 10, 29, 12, 0)) { example.run } }
 
       before do
-        create(:task, :done, team: tenant.team, title: "Done this morning", completed_at: 2.hours.ago)
-        create(:task, :done, team: tenant.team, title: "Done yesterday", completed_at: 1.day.ago)
-        create(:task, :done, team: tenant.team, title: "Done last week", completed_at: Time.utc(2026, 10, 22, 9, 0))
+        create(:task, :done, team: tenant.team, assignee: tenant.member, title: "Done this morning", completed_at: 2.hours.ago)
+        create(:task, :done, team: tenant.team, assignee: tenant.member, title: "Done yesterday", completed_at: 1.day.ago)
+        create(:task, :done, team: tenant.team, assignee: tenant.member, title: "Done last week", completed_at: Time.utc(2026, 10, 22, 9, 0))
       end
 
       it "puts each finished task under the day it was finished" do
@@ -424,11 +424,11 @@ RSpec.describe "Tasks" do
 
       before do
         sign_in tenant.owner
-        create(:task, :done, team: tenant.team, project: storefront, title: "Ship it", completed_at: Time.utc(2026, 11, 3, 9))
-        create(:task, :done, team: tenant.team, title: "Book the dentist", completed_at: Time.utc(2026, 11, 3, 10))
-        create(:task, :done, team: tenant.team, completed_at: Time.utc(2026, 11, 18, 10))
+        create(:task, :done, team: tenant.team, assignee: tenant.owner, project: storefront, title: "Ship it", completed_at: Time.utc(2026, 11, 3, 9))
+        create(:task, :done, team: tenant.team, assignee: tenant.owner, title: "Book the dentist", completed_at: Time.utc(2026, 11, 3, 10))
+        create(:task, :done, team: tenant.team, assignee: tenant.owner, completed_at: Time.utc(2026, 11, 18, 10))
         # A better day, but last month: it sets the all-time best only.
-        3.times { create(:task, :done, team: tenant.team, completed_at: Time.utc(2026, 10, 9, 10)) }
+        3.times { create(:task, :done, team: tenant.team, assignee: tenant.owner, completed_at: Time.utc(2026, 10, 9, 10)) }
       end
 
       def chart = Nokogiri::HTML(response.body).at_css(".month-chart")
@@ -453,8 +453,8 @@ RSpec.describe "Tasks" do
       end
 
       it "draws one line when this month holds the record" do
-        create(:task, :done, team: tenant.team, completed_at: Time.utc(2026, 11, 3, 11))
-        create(:task, :done, team: tenant.team, completed_at: Time.utc(2026, 11, 3, 12))
+        create(:task, :done, team: tenant.team, assignee: tenant.owner, completed_at: Time.utc(2026, 11, 3, 11))
+        create(:task, :done, team: tenant.team, assignee: tenant.owner, completed_at: Time.utc(2026, 11, 3, 12))
 
         get tasks_path
 
@@ -476,7 +476,7 @@ RSpec.describe "Tasks" do
       before { sign_in tenant.owner }
 
       it "shows a day's summary under the day it belongs to" do
-        create(:task, :done, team: tenant.team, completed_at: 1.day.ago)
+        create(:task, :done, team: tenant.team, assignee: tenant.owner, completed_at: 1.day.ago)
         create(:daily_summary, team: tenant.team, day: 1.day.ago.to_date, body: "Yesterday was all invoices.")
 
         get tasks_path
@@ -486,7 +486,7 @@ RSpec.describe "Tasks" do
       end
 
       it "never shows another team's summary" do
-        create(:task, :done, team: tenant.team)
+        create(:task, :done, team: tenant.team, assignee: tenant.member)
         create(:daily_summary, team: create_tenant.team, body: "Their secret day.")
 
         get tasks_path

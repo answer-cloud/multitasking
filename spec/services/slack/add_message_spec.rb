@@ -81,7 +81,7 @@ RSpec.describe Slack::AddMessage do
     message_says("Send the contract")
     task = add.value
     task.complete!
-    other = create(:task, team: tenant.team)
+    other = create(:task, team: tenant.team, assignee: task.assignee)
 
     add
 

@@ -28,12 +28,12 @@ module Tasks
     private
 
     def set_task
-      @task = current_team.tasks.find(params[:task_id])
+      @task = policy_scope(current_team.tasks).find(params[:task_id])
     end
 
     def broadcast
-      Turbo::StreamsChannel.broadcast_replace_to(current_team, :tasks, target: @task, partial: "tasks/task",
-                                                                       locals: { task: @task, projects: current_team.projects.alphabetical.to_a })
+      Turbo::StreamsChannel.broadcast_replace_to(*@task.stream, target: @task, partial: "tasks/task",
+                                                                locals: { task: @task, projects: @task.pickable_projects })
     end
   end
 end

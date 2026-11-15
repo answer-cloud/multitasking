@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe "Handing a task to an agent" do
   let(:tenant) { create_tenant }
   let(:project) { create(:project, team: tenant.team, directory: "/code/storefront") }
-  let!(:task) { create(:task, team: tenant.team, project: project, title: "Fix the login bug") }
+  let!(:task) { create(:task, team: tenant.team, assignee: tenant.member, project: project, title: "Fix the login bug") }
 
   before { sign_in tenant.member }
 
@@ -31,7 +31,7 @@ RSpec.describe "Handing a task to an agent" do
   end
 
   it "offers both agents on a task, and neither on one that is already an agent's conversation" do
-    create(:task, team: tenant.team, title: "Review Claude: tests", source: "claude", url: "claude://code/continue?session=local_abc")
+    create(:task, team: tenant.team, assignee: tenant.member, title: "Review Claude: tests", source: "claude", url: "claude://code/continue?session=local_abc")
 
     get dashboard_path
 
@@ -42,8 +42,8 @@ RSpec.describe "Handing a task to an agent" do
   end
 
   it "leads an agent's or Slack's task with its logo instead of the review prefix" do
-    create(:task, team: tenant.team, title: "Review Codex: tests", source: "codex")
-    create(:task, team: tenant.team, title: "Read the thread", source: "slack")
+    create(:task, team: tenant.team, assignee: tenant.member, title: "Review Codex: tests", source: "codex")
+    create(:task, team: tenant.team, assignee: tenant.member, title: "Read the thread", source: "slack")
 
     get dashboard_path
 
