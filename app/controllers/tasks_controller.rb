@@ -22,12 +22,14 @@ class TasksController < ApplicationController
   # Where the save-this-tab bookmarklet lands, with the page's title and
   # address in the query string. It only fills the form in: a GET must never
   # add a task, or any page could add one by linking here.
+  #
+  # The team page's "Add a task" on an invited person's card lands here too,
+  # with their invitation picked.
   def new
     @task = scoped_tasks.new(
       title: (params[:title].presence || params[:url]).to_s.squish.first(Task::TITLE_LIMIT),
       url: params[:url].to_s.first(2_000).presence,
-      source: "tab",
-      assignee: Current.user
+      **new_task_owner
     )
     authorize @task
   end
@@ -120,7 +122,7 @@ class TasksController < ApplicationController
   def build_quick_add_task
     task = scoped_tasks.new(task_params)
     task.created_by = Current.user
-    task.assignee ||= Current.user
+    task.assignee ||= Current.user unless task.invitation
     task.source = "typed" unless task.source.in?(Task::IN_APP_SOURCES)
     file_under_leading_name(task)
     task
@@ -172,7 +174,29 @@ class TasksController < ApplicationController
     nil # Slack is busy. The link is still worth keeping.
   end
 
+  # A saved tab is yours. A task started from an invited person's card is
+  # typed, and waits on their invitation.
+  def new_task_owner
+    return { source: "tab", assignee: Current.user } if params[:owner].blank?
+
+    { source: "typed", **owner_attributes(params[:owner]) }
+  end
+
+  # `owner` is the form's "On whose list": a person or an invitation, in one
+  # picker. Quick add sends a plain `assignee_id`.
   def task_params
-    params.expect(task: %i[title notes url source project_id assignee_id])
+    permitted = params.expect(task: %i[title notes url source project_id assignee_id owner])
+    owner = permitted.delete(:owner)
+    owner.nil? ? permitted : permitted.merge(owner_attributes(owner))
+  end
+
+  # A person's id is only a claim, and the task checks it. An invitation is
+  # found through the team and the policy scope, so one from another team, or
+  # one this person may not see, is a 404.
+  def owner_attributes(owner)
+    id = owner.to_s[/\Ainvitation_(\d+)\z/, 1]
+    return { assignee_id: owner.presence, invitation: nil } if id.nil?
+
+    { assignee_id: nil, invitation: policy_scope(current_team.invitations).unaccepted.find(id) }
   end
 end

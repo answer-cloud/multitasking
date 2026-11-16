@@ -20,12 +20,14 @@
 #  assignee_id      :bigint
 #  created_by_id    :bigint
 #  external_id      :string
+#  invitation_id    :bigint
 #  project_id       :bigint
 #  team_id          :bigint           not null
 #
 # Indexes
 #
 #  index_tasks_on_created_by_id                             (created_by_id)
+#  index_tasks_on_invitation_id                             (invitation_id)
 #  index_tasks_on_project_id                                (project_id)
 #  index_tasks_on_team_id                                   (team_id)
 #  index_tasks_on_team_id_and_assignee_id_and_completed_at  (team_id,assignee_id,completed_at)
@@ -36,6 +38,7 @@
 #
 #  fk_rails_...  (assignee_id => users.id) ON DELETE => nullify
 #  fk_rails_...  (created_by_id => users.id)
+#  fk_rails_...  (invitation_id => team_invitations.id) ON DELETE => nullify
 #  fk_rails_...  (project_id => projects.id) ON DELETE => nullify
 #  fk_rails_...  (team_id => teams.id)
 #

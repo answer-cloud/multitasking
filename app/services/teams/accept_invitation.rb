@@ -41,10 +41,17 @@ module Teams
         membership.save!
 
         @invitation.update!(accepted_at: Time.current, accepted_by: @user)
+        hand_over_tasks
         @user.update_column(:last_team_id, @invitation.team_id)
       end
 
       membership
+    end
+
+    # What was waiting for them is now on their list, in the order it was
+    # given. Bottom first, because each lands on top of the one before.
+    def hand_over_tasks
+      @invitation.tasks.in_order.reverse_each { |task| task.update!(assignee: @user, invitation: nil) }
     end
   end
 end

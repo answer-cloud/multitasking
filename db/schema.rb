@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_100600) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -167,7 +167,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_100600) do
     t.string "handed_to"
     t.datetime "handed_at"
     t.bigint "assignee_id"
+    t.bigint "invitation_id"
     t.index ["created_by_id"], name: "index_tasks_on_created_by_id"
+    t.index ["invitation_id"], name: "index_tasks_on_invitation_id"
     t.index ["project_id"], name: "index_tasks_on_project_id"
     t.index ["team_id", "assignee_id", "completed_at"], name: "index_tasks_on_team_id_and_assignee_id_and_completed_at"
     t.index ["team_id", "completed_at"], name: "index_tasks_on_team_id_and_completed_at"
@@ -242,6 +244,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_100600) do
   add_foreign_key "slack_connections", "users"
   add_foreign_key "subscriptions", "teams"
   add_foreign_key "tasks", "projects", on_delete: :nullify
+  add_foreign_key "tasks", "team_invitations", column: "invitation_id", on_delete: :nullify
   add_foreign_key "tasks", "teams"
   add_foreign_key "tasks", "users", column: "assignee_id", on_delete: :nullify
   add_foreign_key "tasks", "users", column: "created_by_id"

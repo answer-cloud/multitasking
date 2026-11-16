@@ -26,6 +26,12 @@
   border-radius: var(--radius);
 }
 
+// Not on the team yet: the same card, drawn in pencil.
+.person--invited {
+  background-color: transparent;
+  border-style: dashed;
+}
+
 .person__head {
   display: flex;
   flex-wrap: wrap;

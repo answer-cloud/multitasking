@@ -12,7 +12,9 @@ Run the hook the user installed from Done's "Connect agents" page:
 ```
 
 - `<person>` is a teammate's first name, full name or email, as the user said
-  it. Use `me` for the user's own list.
+  it. Use `me` for the user's own list. Somebody invited who has not joined
+  yet goes by their email, and only an admin can assign to them: the task
+  waits and is theirs when they accept.
 - `<task>` is one line saying what needs doing, written so it makes sense to
   somebody who was not in this conversation. Start with a verb.
 - `--project` files it under one of the team's projects, by name. Leave it out

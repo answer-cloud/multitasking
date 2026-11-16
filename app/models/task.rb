@@ -31,12 +31,14 @@
 #  assignee_id      :bigint
 #  created_by_id    :bigint
 #  external_id      :string
+#  invitation_id    :bigint
 #  project_id       :bigint
 #  team_id          :bigint           not null
 #
 # Indexes
 #
 #  index_tasks_on_created_by_id                             (created_by_id)
+#  index_tasks_on_invitation_id                             (invitation_id)
 #  index_tasks_on_project_id                                (project_id)
 #  index_tasks_on_team_id                                   (team_id)
 #  index_tasks_on_team_id_and_assignee_id_and_completed_at  (team_id,assignee_id,completed_at)
@@ -47,6 +49,7 @@
 #
 #  fk_rails_...  (assignee_id => users.id) ON DELETE => nullify
 #  fk_rails_...  (created_by_id => users.id)
+#  fk_rails_...  (invitation_id => team_invitations.id) ON DELETE => nullify
 #  fk_rails_...  (project_id => projects.id) ON DELETE => nullify
 #  fk_rails_...  (team_id => teams.id)
 #
@@ -93,6 +96,9 @@ class Task < ApplicationRecord
   belongs_to :created_by, class_name: "User", optional: true
   belongs_to :assignee, class_name: "User", optional: true
   belongs_to :project, optional: true
+  # Set while the task waits for somebody invited to the team: it has no
+  # assignee until they accept, and then it is theirs.
+  belongs_to :invitation, class_name: "TeamInvitation", optional: true
 
   validates :title, presence: true, length: { maximum: TITLE_LIMIT }
   validates :notes, length: { maximum: 10_000 }
@@ -102,6 +108,10 @@ class Task < ApplicationRecord
   validate :url_is_a_web_link
   validate :project_is_on_this_team
   validate :assignee_is_on_this_team, if: :assignee_id_changed?
+  validate :invitation_is_open_on_this_team, if: :invitation_id_changed?
+
+  # On somebody's list, it waits for nobody.
+  before_validation { self.invitation = nil if assignee_id }
 
   before_validation :touch_activity, on: :create
   before_create :put_on_top
@@ -229,6 +239,13 @@ class Task < ApplicationRecord
   # person, so a task never shows up on a list it is not on.
   def stream = [ team, assignee, :tasks ]
 
+  # Whose list it is on, as the form's picker says it: a person's id, or an
+  # invitation's. See TasksController#owner_attributes.
+  def owner = invitation_id ? "invitation_#{invitation_id}" : assignee_id&.to_s
+
+  # The name to show for that: the person's, or the address they were invited at.
+  def owner_name = assignee&.name || invitation&.email
+
   # The projects its row's picker offers: the ones its assignee can see. For
   # the broadcasts, which render the row with nobody signed in.
   def pickable_projects = team.projects.visible_to(assignee&.membership_for(team)).alphabetical.to_a
@@ -299,6 +316,12 @@ class Task < ApplicationRecord
   # Controllers offer only the team's own people, so this should never fire.
   # It is here because an id in a form is only a claim, and a task on a
   # stranger's list would show them this team's work.
+  def invitation_is_open_on_this_team
+    return if invitation.nil? || (invitation.team_id == team_id && !invitation.accepted?)
+
+    errors.add(:invitation, "must be an open invitation to this team")
+  end
+
   def assignee_is_on_this_team
     return if assignee.nil? || assignee.member_of?(team)
 
