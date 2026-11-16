@@ -1,5 +1,8 @@
-<% content_for :title, "Save this tab" %>
+<%# Reached two ways: the save-this-tab bookmarklet, and "Add a task" on an %>
+<%# invited person's card. %>
+<% heading = @task.invitation ? "Add a task for #{@task.invitation.email}" : "Save this tab" %>
+<% content_for :title, heading %>
 
-<%= page_title "Save this tab" %>
+<%= page_title heading %>
 
 <%= render "form", task: @task %>

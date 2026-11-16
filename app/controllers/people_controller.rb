@@ -11,10 +11,12 @@ class PeopleController < ApplicationController
 
   def index
     @memberships = policy_scope(scoped_memberships.ordered.includes(:user))
-    pending = policy_scope(current_team.tasks).pending.in_order.includes(:project).group_by(&:assignee_id)
+    waiting, listed = policy_scope(current_team.tasks).pending.in_order.includes(:project).partition(&:invitation_id)
 
-    @pending = pending.except(nil)
-    @unassigned = pending.fetch(nil, [])
+    @pending = listed.group_by(&:assignee_id)
+    @unassigned = @pending.delete(nil) || []
+    @waiting = waiting.group_by(&:invitation_id)
+    @invitations = invitations_to_show
     @done_today = policy_scope(current_team.tasks).done_today.group(:assignee_id).count
   end
 
@@ -27,6 +29,15 @@ class PeopleController < ApplicationController
   end
 
   private
+
+  # The people asked onto the team who have not joined yet: you can give
+  # them tasks now, and the tasks are theirs when they accept. An invitation
+  # that ran out stays for as long as tasks wait on it. Only for those who
+  # may see invitations at all — the policy scope is empty for the rest.
+  def invitations_to_show
+    policy_scope(current_team.invitations).unaccepted.order(:email)
+      .select { |invitation| invitation.pending? || @waiting.key?(invitation.id) }
+  end
 
   # The one line that matters.
   def scoped_memberships = current_team.memberships

@@ -38,6 +38,37 @@
       </p>
     </li>
   <% end %>
+
+  <%# Asked onto the team, not joined yet. What you give them waits here, %>
+  <%# and is on their list the moment they accept. %>
+  <% @invitations.each do |invitation| %>
+    <% tasks = @waiting.fetch(invitation.id, []) %>
+    <li class="person person--invited" id="<%= dom_id(invitation) %>">
+      <div class="person__head">
+        <h2 class="person__name"><%= invitation.email %></h2>
+        <span class="badge badge--quiet"><%= invitation.expired? ? "Invite expired" : "Invited" %></span>
+      </div>
+
+      <p class="person__counts">
+        <span class="numeric"><%= tasks.size %></span> waiting for them
+      </p>
+
+      <% if tasks.any? %>
+        <ul class="person__tasks">
+          <% tasks.each do |task| %>
+            <li><%= project_tag(task.project) %> <%= link_to task_title(task), task, class: "person__task" %></li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="person__more">Nothing yet. Add a task and it is theirs when they join.</p>
+      <% end %>
+
+      <p class="person__open">
+        <%= link_to "Add a task", new_task_path(owner: "invitation_#{invitation.id}"), class: "btn btn--sm",
+              "aria-label": "Add a task for #{invitation.email}" %>
+      </p>
+    </li>
+  <% end %>
 </ul>
 
 <%# Tasks with nobody on them: left behind by somebody who has gone, or %>

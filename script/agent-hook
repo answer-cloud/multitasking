@@ -304,7 +304,7 @@ def assign(arguments, settings)
   body = JSON.parse(response.body.to_s) rescue {}
   abort(Array(body["errors"]).join(" ").then { |why| why.empty? ? "Could not add the task (#{response.code})." : why }) unless response.is_a?(Net::HTTPSuccess)
 
-  puts "Added to #{body["assignee"] || "the team"}’s list."
+  puts "Added to #{body["assignee"] || "the team"}’s list.#{" They have not joined yet. It is theirs when they accept." if body["invited"]}"
 rescue SystemCallError, SocketError, Timeout::Error => e
   abort "Could not reach #{settings[:url]}: #{e.message}"
 end

@@ -16,6 +16,10 @@ module Inbox
   # picks out nobody, or more than one person, is refused rather than guessed
   # at. A `project`, by name, files it.
   #
+  # An admin's token can also name somebody invited who has not joined yet, by
+  # their email or the part before the @. The task waits on the invitation
+  # and is theirs when they accept.
+  #
   # A caller that sends an `external_id` (a Claude session, a Codex thread)
   # gets one task per id. A second ping updates that task, moves it back to the
   # top and reopens it, because "the agent needs you again" is news even if you
@@ -55,7 +59,8 @@ module Inbox
 
     # The assignee's name goes back so the caller can say whose list it is on.
     def render_saved(task)
-      render json: { id: task.id, created: task.previously_new_record?, assignee: task.assignee&.name },
+      render json: { id: task.id, created: task.previously_new_record?, assignee: task.owner_name,
+                     invited: task.invitation.present? },
              status: task.previously_new_record? ? :created : :ok
     end
 
@@ -75,12 +80,23 @@ module Inbox
       return @assignee = @membership.user if name.empty?
 
       @assignee = @team.memberships.named(name)&.user
-      return if @assignee
+      @invitation = invitations.named(name) if @assignee.nil?
+      return if @assignee || @invitation
 
-      people = @team.memberships.ordered.includes(:user).map { |membership| membership.user.name }
-      render json: { errors: [ "Nobody on this team is called “#{name.first(100)}”. The team is: #{people.to_sentence}." ] },
+      render json: { errors: [ "Nobody on this team is called “#{name.first(100)}”. The team is: #{roster.to_sentence}." ] },
              status: :unprocessable_content
     end
+
+    # Who a task can be given to, for the caller that named nobody.
+    def roster
+      @team.memberships.ordered.includes(:user).map { |membership| membership.user.name } +
+        invitations.unaccepted.order(:email).map { |invitation| "#{invitation.email} (invited)" }
+    end
+
+    # The invitations the token's owner may see: all of them for an admin,
+    # none for anybody else — what TeamInvitationPolicy::Scope says, for a
+    # request with nobody signed in.
+    def invitations = @membership.admin_or_above? ? @team.invitations : @team.invitations.none
 
     # The projects the token's owner can see. A hook cannot file a task under
     # a project its owner could not open, or learn that one exists.
@@ -97,11 +113,11 @@ module Inbox
       task.external_id = external_id
       # A session that pings again stays on the list it is on, unless this
       # ping names somebody.
-      task.assignee = @assignee if params[:assignee].present?
+      task.assign_attributes(assignee: @assignee, invitation: @invitation) if params[:assignee].present?
       task
     end
 
-    def new_task = @team.tasks.new(created_by: @membership.user, assignee: @assignee)
+    def new_task = @team.tasks.new(created_by: @membership.user, assignee: @assignee, invitation: @invitation)
 
     # The task somebody handed to this agent from its row, coming back from the
     # session that started on it: that session's first prompt begins with the

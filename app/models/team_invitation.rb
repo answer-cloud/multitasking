@@ -39,6 +39,8 @@ class TeamInvitation < ApplicationRecord
 
   belongs_to :invited_by, class_name: "User"
   belongs_to :accepted_by, class_name: "User", optional: true
+  # Tasks waiting for this person to join. Revoked, they go back to nobody.
+  has_many :tasks, foreign_key: :invitation_id, inverse_of: :invitation, dependent: :nullify
 
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :token, presence: true, uniqueness: true
@@ -50,8 +52,20 @@ class TeamInvitation < ApplicationRecord
   before_validation :assign_expiry, on: :create
 
   scope :pending, -> { where(accepted_at: nil).where(expires_at: Time.current..) }
+  scope :unaccepted, -> { where(accepted_at: nil) }
   scope :accepted, -> { where.not(accepted_at: nil) }
   scope :expired, -> { where(accepted_at: nil).where(expires_at: ...Time.current) }
+
+  # The invitation somebody means by an email, or by the part before the @
+  # — all there is to call a person who has no account yet. Nil unless
+  # exactly one fits.
+  def self.named(name)
+    wanted = name.to_s.squish.downcase
+    return if wanted.empty?
+
+    matches = unaccepted.select { |invitation| wanted.in?([ invitation.email, invitation.email.split("@").first ]) }
+    matches.first if matches.one?
+  end
 
   def accepted? = accepted_at.present?
   def expired? = expires_at.present? && expires_at.past?

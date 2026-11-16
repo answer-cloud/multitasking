@@ -17,9 +17,9 @@
   </div>
 
   <div class="field">
-    <%= form.label :assignee_id, "On whose list", class: "field__label" %>
-    <%= form.collection_select :assignee_id, current_team.users.order(:first_name, :email), :id, :name,
-          { include_blank: "Nobody yet" }, class: "select", "aria-invalid": task.errors.include?(:assignee) %>
+    <%= form.label :owner, "On whose list", class: "field__label" %>
+    <%= form.select :owner, list_owner_options, { include_blank: "Nobody yet" }, class: "select",
+          "aria-invalid": task.errors.include?(:assignee) || task.errors.include?(:invitation) %>
   </div>
 
   <div class="field">

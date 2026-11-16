@@ -1,6 +1,20 @@
 # frozen_string_literal: true
 
 module TasksHelper
+  # The form's "On whose list": everybody on the team, then — for those who
+  # may see invitations — the people asked on who have not joined yet.
+  def list_owner_options
+    people = current_team.users.order(:first_name, :email).map { |user| [ user.name, user.id.to_s ] }
+    invited = policy_scope(current_team.invitations).unaccepted.order(:email)
+    people + invited.map { |invitation| [ "#{invitation.email} (invited)", "invitation_#{invitation.id}" ] }
+  end
+
+  def list_owner_label(task)
+    return "#{task.invitation.email} (invited)" if task.invitation
+
+    task.assignee&.name || "Nobody yet"
+  end
+
   # Rotating examples for the quick-add box. A blank box asks "what?"; an
   # example answers it.
   QUICK_ADD_EXAMPLES = [
