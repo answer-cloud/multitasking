@@ -21,6 +21,7 @@ module TaskList
 
     @priorities = pending.prioritized
     @tasks = pending.unprioritized
+    @low_priorities = pending.low_prioritized
     @projects = visible_projects.alphabetical.to_a
     @new_task = current_team.tasks.new(assignee: person)
     @view = list_view

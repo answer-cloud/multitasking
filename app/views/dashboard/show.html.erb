@@ -13,7 +13,7 @@
      data-checklist-faces-value="<%= TasksHelper::INBOX_ZERO_FACES.to_json %>"
      data-action="turbo:before-stream-render@document->checklist#holdStream turbo:submit-end->checklist#settled">
   <%= page_title list_title(@person), eyebrow: own ? today_label : link_to("Team", people_path) do %>
-    <p class="today__summary"><%= list_summary(@person, @priorities.size + @tasks.size, @done_today.size) %></p>
+    <p class="today__summary"><%= list_summary(@person, @priorities.size + @tasks.size + @low_priorities.size, @done_today.size) %></p>
   <% end %>
 
   <%= render "tasks/quick_add", task: @new_task %>
@@ -53,6 +53,18 @@
       <p class="checklist-empty__title">Inbox zero.</p>
       <p>Nothing left to tick. Type something above, or go outside.</p>
     </div>
+  </section>
+
+  <%# Hidden until something is in it, like the priority list. "Low priority" %>
+  <%# in a row's panel puts a task here; the star lifts it straight to Priority. %>
+  <section class="today__section low-priorities" aria-labelledby="low_priorities_heading">
+    <div class="today__head">
+      <h2 id="low_priorities_heading">Low priority</h2>
+    </div>
+    <%= render "tasks/columns", labels: %w[Task From Age], starred: true %>
+    <ul class="checklist" id="low_priorities" data-checklist-target="list" data-controller="sortable">
+      <%= render partial: "tasks/task", collection: @low_priorities, as: :task, locals: { projects: @projects } %>
+    </ul>
   </section>
 
   <section class="today__section" aria-labelledby="done_today_heading">
