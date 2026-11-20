@@ -84,8 +84,14 @@ module TasksHelper
   def chart_day_label(date, count) = "#{date.strftime("%A %-d %B")}: #{pluralize(count, "task")} done"
 
   # The dashboard list a task still to do belongs in. Every stream that puts a
-  # row back asks this, so a priority task never lands in the rest.
-  def task_list_id(task) = task.priority? ? "priorities" : "tasks"
+  # row back asks this, so a priority or low priority task never lands in the
+  # rest.
+  def task_list_id(task)
+    return "priorities" if task.priority?
+    return "low_priorities" if task.low_priority?
+
+    "tasks"
+  end
 
   # The tallies of what one person finished today — the one in the masthead,
   # the one over their jar — are marked with whose they are, so a stream about

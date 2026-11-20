@@ -11,6 +11,7 @@ require "rails_helper"
 #  handed_at        :datetime
 #  handed_to        :string
 #  last_activity_at :datetime         not null
+#  low_priority     :boolean          default(FALSE), not null
 #  notes            :text
 #  position         :integer          default(0), not null
 #  priority         :boolean          default(FALSE), not null
@@ -222,6 +223,47 @@ RSpec.describe Task do
       first.reopen!
 
       expect(priorities).to eq([ first ])
+    end
+  end
+
+  describe "low priority" do
+    let(:team) { create(:team) }
+    let!(:first) { create(:task, team: team) }
+    let!(:second) { create(:task, team: team) }
+
+    def low = team.tasks.pending.low_prioritized.in_order.to_a
+    def rest = team.tasks.pending.unprioritized.in_order.to_a
+
+    it "moves a task out of the rest and onto the top of the low priority list" do
+      first.low_prioritize!
+
+      expect(low).to eq([ first ])
+      expect(rest).to eq([ second ])
+    end
+
+    it "puts a task brought back on top of the rest" do
+      first.low_prioritize!
+      first.deprioritize!
+
+      expect(rest.first).to eq(first)
+    end
+
+    # The lists are numbered apart, so a drag in one never moves the other.
+    it "drags within the low priority list without touching the rest" do
+      first.low_prioritize!
+      second.low_prioritize!
+
+      expect { first.move_to(0) }.not_to(change { rest })
+      expect(low).to eq([ first, second ])
+    end
+
+    it "is never a priority at the same time" do
+      first.low_prioritize!
+      first.prioritize!
+
+      expect(first.reload).to be_priority
+      expect(first).not_to be_low_priority
+      expect(first.tap { |task| task.low_priority = true }).not_to be_valid
     end
   end
 

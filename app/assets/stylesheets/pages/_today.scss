@@ -58,8 +58,14 @@
 .priorities:not(:has(.checklist__item)) { display: none; }
 .priorities:not(:has(.checklist__item)) + .today__section { margin-top: 0; }
 
-// Everything still to do may be a priority. That is not inbox zero.
-.today:has(.priorities .checklist__item) .checklist-empty { display: none; }
+// The low priority list sits under the rest, and likewise only while
+// something is in it.
+.low-priorities:not(:has(.checklist__item)) { display: none; }
+
+// Everything still to do may be a priority, or put off as low priority. That
+// is not inbox zero.
+.today:has(.priorities .checklist__item) .checklist-empty,
+.today:has(.low-priorities .checklist__item) .checklist-empty { display: none; }
 
 // Column labels over an empty list label nothing. The empty state takes the
 // space instead.

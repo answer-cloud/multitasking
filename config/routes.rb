@@ -29,6 +29,8 @@ Rails.application.routes.draw do
     resource :completion, only: %i[create destroy], module: :tasks
     # Pinning it in the priority list, and letting it back down.
     resource :priority, only: %i[create destroy], module: :tasks
+    # Putting it off into the low priority list, and bringing it back.
+    resource :low_priority, only: %i[create destroy], module: :tasks
     # Filing it under a project, from the picker in its row.
     resource :project, only: :update, module: :tasks
     # Dragging it up or down the list.

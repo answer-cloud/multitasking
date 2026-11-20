@@ -63,6 +63,7 @@
       <%# where there is no signed-in user to ask, and every member may edit. %>
       <div class="checklist__actions">
         <%= link_to "Edit", edit_task_path(task), class: "btn-link" %>
+        <%= render "tasks/low_priority_toggle", task: task %>
         <%= button_to "Delete", task, method: :delete, class: "btn-link btn-link--danger",
               form: { data: { turbo_confirm: "Delete this task for good?" } } %>
       </div>

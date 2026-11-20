@@ -20,6 +20,7 @@
 #  handed_at        :datetime
 #  handed_to        :string
 #  last_activity_at :datetime         not null
+#  low_priority     :boolean          default(FALSE), not null
 #  notes            :text
 #  position         :integer          default(0), not null
 #  priority         :boolean          default(FALSE), not null
@@ -109,6 +110,7 @@ class Task < ApplicationRecord
   validate :project_is_on_this_team
   validate :assignee_is_on_this_team, if: :assignee_id_changed?
   validate :invitation_is_open_on_this_team, if: :invitation_id_changed?
+  validate :not_both_priorities
 
   # On somebody's list, it waits for nobody.
   before_validation { self.invitation = nil if assignee_id }
@@ -132,7 +134,9 @@ class Task < ApplicationRecord
   scope :pending, -> { where(completed_at: nil) }
   scope :done, -> { where.not(completed_at: nil) }
   scope :prioritized, -> { where(priority: true) }
-  scope :unprioritized, -> { where(priority: false) }
+  # The middle list: neither a priority nor put off as low priority.
+  scope :unprioritized, -> { where(priority: false, low_priority: false) }
+  scope :low_prioritized, -> { where(low_priority: true) }
   scope :done_today, -> { where(completed_at: Time.current.beginning_of_day..) }
   scope :fresh_first, -> { order(last_activity_at: :desc) }
   # The order you dragged them into. Ties — every task from before dragging —
@@ -221,13 +225,16 @@ class Task < ApplicationRecord
     update!(completed_at: nil, last_activity_at: Time.current)
   end
 
-  # Pinned in the priority list above everything else, or let back down into
-  # the rest. Either way it lands on top of the list it joins. Not activity,
-  # like moving it: ranking a task is not working on it.
-  def prioritize! = place_in_list!(priority: true)
-  def deprioritize! = place_in_list!(priority: false)
+  # Pinned in the priority list above everything else, put off into the low
+  # priority list under the rest, or brought back into the rest. Either way it
+  # lands on top of the list it joins. Not activity, like moving it: ranking a
+  # task is not working on it.
+  def prioritize!     = place_in_list!(priority: true, low_priority: false)
+  def low_prioritize! = place_in_list!(priority: false, low_priority: true)
+  def deprioritize!   = place_in_list!(priority: false, low_priority: false)
 
-  # Above everything else still to do in its own list — priority or the rest.
+  # Above everything else still to do in its own list — priority, the rest, or
+  # low priority.
   # New tasks, reopened ones, and ones an agent pings about again all land
   # here — the same place the dashboard's stream prepends them, so a reload
   # agrees with what was on screen.
@@ -281,14 +288,22 @@ class Task < ApplicationRecord
   private
 
   # The other tasks still to do in the same list as this one: the same
-  # person's, and the priority list and the rest are numbered separately, so
-  # dragging in one never shuffles the other.
-  def siblings = team.tasks.pending.assigned_to(assignee).where(priority: priority).where.not(id: id)
+  # person's, and the priority list, the rest and the low priority list are
+  # numbered separately, so dragging in one never shuffles another.
+  def siblings = team.tasks.pending.assigned_to(assignee).where(priority: priority, low_priority: low_priority).where.not(id: id)
 
-  def place_in_list!(priority:)
+  def place_in_list!(priority:, low_priority:)
     self.priority = priority
+    self.low_priority = low_priority
     put_on_top
     save!
+  end
+
+  # A task is in one list. Both flags at once would number it with neither.
+  def not_both_priorities
+    return unless priority? && low_priority?
+
+    errors.add(:low_priority, "cannot be set on a priority task")
   end
 
   def web_link?(value)

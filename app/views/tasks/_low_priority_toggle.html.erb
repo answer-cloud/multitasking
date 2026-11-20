@@ -1,0 +1,7 @@
+<%# Down into the low priority list under the rest, or back up into the rest. %>
+<%# A real button in a real form, like the star, so it works without JavaScript. %>
+<% if task.low_priority? %>
+  <%= button_to "Back to to do", task_low_priority_path(task), method: :delete, class: "btn-link" %>
+<% else %>
+  <%= button_to "Low priority", task_low_priority_path(task), method: :post, class: "btn-link" %>
+<% end %>

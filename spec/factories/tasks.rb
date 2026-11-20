@@ -9,6 +9,7 @@
 #  handed_at        :datetime
 #  handed_to        :string
 #  last_activity_at :datetime         not null
+#  low_priority     :boolean          default(FALSE), not null
 #  notes            :text
 #  position         :integer          default(0), not null
 #  priority         :boolean          default(FALSE), not null
